@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Mission Control - Triadisches KI-Coaching</title>
+    <meta name="description" content="Revolutionäres triadisches Coaching-System: Coach + Klient + KI. Echte Kollaboration in Echtzeit!">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="apiStatus" class="api-status demo">🟡 Demo-Modus</div>
+
+    <!-- KOLLABORATIONS-MODUS (Externe Ansicht für Coachee) -->
+    <div id="collaborationMode" class="collaboration-mode" style="display: none;">
+        <div class="collaboration-header">
+            <h1>🤝 Coaching-Kollaboration</h1>
+            <p>Gemeinsame KI-gestützte Analyse mit Ihrem Coach</p>
+            <div style="font-size: 0.9em; opacity: 0.8; margin-top: 10px;">
+                Session-ID: <span id="collaborationSessionId"></span>
+            </div>
+        </div>
+        
+        <div class="collaboration-content">
+            <div class="prompt-display" id="collaborationPromptDisplay">
+                <h3 style="color: #667eea; margin-bottom: 15px;">📝 Aktueller Coaching-Prompt:</h3>
+                <div id="collaborationPromptText" class="waiting-state">
+                    Warten auf Prompt vom Coach...
+                </div>
+            </div>
+            
+            <div class="ki-response-display" id="collaborationKiResponse">
+                <h3 style="color: #059669; margin-bottom: 15px;">🤖 KI-Analyse:</h3>
+                <div id="collaborationResponseText" class="waiting-state">
+                    Hier erscheint die KI-Antwort, sobald der Prompt gesendet wurde...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STANDARD COACH-DASHBOARD -->
+    <div id="mainApp" class="container">
+        <!-- Client Selection Screen -->
+        <div id="clientSelection" class="client-selection-screen">
+            <div class="header">
+                <h1>🚀 Coach Mission Control</h1>
+                <p>Triadisches Coaching: Coach + Klient + KI</p>
+                <p style="font-size: 1em; opacity: 0.8;">Wählen Sie einen Test-Klienten und erleben Sie echte Kollaboration!</p>
+                
+                <!-- Sales Banner -->
+                <div class="sales-banner">
+                    <h2>🎯 Revolutionieren Sie Ihr Coaching mit KI!</h2>
+                    <p>Diese Demo zeigt nur einen Bruchteil der Möglichkeiten. Die vollständige Coach Mission Control App bietet:</p>
+                    <p><strong>✨ 50+ KI-Templates • 📊 Session-Analysen • 🎛️ Profi-Dashboard • 🔗 Real-Time Kollaboration</strong></p>
+                    <button class="cta-button" onclick="showSalesModal()">
+                        🚀 Jetzt Vollversion kaufen - 197€
+                    </button>
+                </div>
+            </div>
+
+            <div class="client-selection" id="clientCards">
+                <div class="client-card" onclick="selectClient('sarah')">
+                    <h3>👩‍💼 Sarah Weber</h3>
+                    <div class="age">35 Jahre, Marketing-Managerin</div>
+                    <div class="problem">
+                        Steht vor einem wichtigen Karrierewechsel. Nach 10 Jahren im Marketing zieht sie einen Wechsel in den nachhaltigen Sektor in Betracht, ist aber unsicher über die finanziellen Risiken.
+                    </div>
+                    <div class="goal">🎯 Ziel: Klarheit über Karrierewechsel gewinnen</div>
+                </div>
+
+                <div class="client-card" onclick="selectClient('marcus')">
+                    <h3>👨‍🔧 Marcus Schmidt</h3>
+                    <div class="age">48 Jahre, Ingenieur</div>
+                    <div class="problem">
+                        Durchlebt eine Midlife-Krise nach 20 Jahren in derselben Firma. Fühlt sich unterfordert und sehnt sich nach neuen Herausforderungen, hat aber Angst vor Veränderungen.
+                    </div>
+                    <div class="goal">🎯 Ziel: Neue Perspektiven und Mut für Veränderung</div>
+                </div>
+
+                <div class="client-card" onclick="selectClient('lisa')">
+                    <h3>👩‍⚕️ Dr. Lisa Müller</h3>
+                    <div class="age">42 Jahre, Ärztin</div>
+                    <div class="problem">
+                        Kämpft mit der Balance zwischen Karriere als Chirurgin und Familienleben. Burnout-Symptome machen sich bemerkbar, aber sie liebt ihren Beruf.
+                    </div>
+                    <div class="goal">🎯 Ziel: Nachhaltige Work-Life-Balance finden</div>
+                </div>
+
+                <div class="client-card" onclick="selectClient('werner')">
+                    <h3>👨‍💼 Werner Hoffmann</h3>
+                    <div class="age">62 Jahre, Abteilungsleiter</div>
+                    <div class="problem">
+                        Steht vor dem Ruhestand und schwankt zwischen Vorfreude und Angst vor dem Verlust seiner beruflichen Identität. Sucht nach neuen Sinnstiftungen.
+                    </div>
+                    <div class="goal">🎯 Ziel: Bewussten Übergang in den Ruhestand gestalten</div>
+                </div>
+            </div>
+
+            <button id="startButton" class="start-button" onclick="startSession()">🚀 Demo-Session starten</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div class="dashboard-header">
+                <h2 id="sessionTitle">Coach Mission Control</h2>
+                <div class="session-info">
+                    <span id="currentTime"></span>
+                    <button class="btn btn-secondary" onclick="showExportModal()">📥 Export</button>
+                    <button class="btn btn-secondary" onclick="showSalesModal()">🛒 Kaufen</button>
+                </div>
+            </div>
+
+            <!-- Kollaborations-Link Section -->
+            <div class="collaboration-link-section" id="collaborationLinkSection">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1em;">🔗 Kollaborations-Link für Coachee:</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9;">Teilen Sie diesen Link mit Ihrem Coachee für Live-Kollaboration</p>
+                </div>
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <div class="link-display" id="collaborationLink" onclick="copyCollaborationLink()">
+                        https://coachingdemo.vercel.app/session/ABC123
+                    </div>
+                    <button class="btn btn-success" onclick="copyCollaborationLink()">📋 Kopieren</button>
+                    <button class="btn btn-secondary" onclick="openCollaborationWindow()" style="margin-left: 10px;">🪟 Öffnen</button>
+                </div>
+            </div>
+
+            <div class="steps-navigation">
+                <div class="steps-grid" id="stepsGrid">
+                    <!-- Steps werden dynamisch generiert -->
+                </div>
+            </div>
+
+            <div class="main-interface">
+                <div class="chat-panel">
+                    <div class="panel-header">
+                        💬 Coaching-Gespräch
+                        <div style="font-size: 0.8em; color: #666; font-weight: normal; margin-top: 5px;">
+                            📢 <strong>Live-Demo:</strong> Das echte Gespräch findet mündlich statt
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    
+                    <!-- Coach Notes -->
+                    <div class="notes-section">
+                        <h4>📝 Coach-Notizen (Live)</h4>
+                        <div class="quick-notes">
+                            <button class="note-btn note-btn-observation" onclick="addQuickNote('observation')">👁️ Beobachtung</button>
+                            <button class="note-btn note-btn-intervention" onclick="addQuickNote('intervention')">⚡ Intervention</button>
+                            <button class="note-btn note-btn-resource" onclick="addQuickNote('resource')">💪 Ressource</button>
+                            <button class="note-btn note-btn-hypothesis" onclick="addQuickNote('hypothesis')">🧠 Hypothese</button>
+                        </div>
+                        <div class="notes-list" id="notesList">
+                            <div style="text-align: center; color: #666; font-style: italic; font-size: 0.8em;">
+                                Noch keine Notizen...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-panel">
+                    <div class="panel-header">
+                        🤖 KI-Assistent
+                        <div style="font-size: 0.8em; color: #666; font-weight: normal; margin-top: 5px;">
+                            Gemeinsame KI-Analysen mit Coachee
+                        </div>
+                    </div>
+                    <div class="current-step-info" id="currentStepInfo"></div>
+                    
+                    <!-- KI Instructions für Coach -->
+                    <div class="tool-section" style="border: 2px solid #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                        <h4 style="color: #d97706;">🤖 KI-Coach-Hinweise (privat)</h4>
+                        <div id="coachInstructions" style="font-size: 0.8em; line-height: 1.4; color: #92400e;">
+                            <p>Hier erscheinen strategische Hinweise für Sie als Coach basierend auf dem Gesprächsverlauf.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-panel">
+                    <div class="panel-header">🛠️ Coach-Tools</div>
+                    
+                    <!-- Template Repository -->
+                    <div class="template-repository">
+                        <h4 style="color: #2e7d32; margin-bottom: 10px;">📚 Template-Repository</h4>
+                        <input type="text" class="template-search" id="templateSearch" placeholder="🔍 Suche: systemisch, ressourcen..." oninput="filterTemplates()">
+                        <div id="templateList">
+                            <!-- Templates werden dynamisch geladen -->
+                        </div>
+                    </div>
+                    
+                    <div class="coach-tools" id="coachTools"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="promptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ KI-Prompt für Kollaboration bearbeiten</h3>
+                <button class="close-btn" onclick="closePromptModal()">&times;</button>
+            </div>
+            
+            <div class="collaboration-alert">
+                <strong>🔗 Live-Kollaboration:</strong> Ihr Coachee sieht diesen Prompt in Echtzeit im Kollaborations-Fenster!<br>
+                <em>Bearbeiten Sie gemeinsam den Prompt und senden Sie ihn dann an die KI.</em>
+            </div>
+
+            <div class="prompt-editor">
+                <label for="promptText">Prompt-Text (wird live mit Coachee geteilt):</label>
+                <textarea id="promptText" placeholder="Hier entsteht der gemeinsame Prompt für die KI-Analyse..." oninput="updateCollaborationPrompt()"></textarea>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">Variablen gemeinsam ausfüllen:</h4>
+                <div style="margin-bottom: 15px;">
+                    <label>Problem/Situation:</label>
+                    <input type="text" id="var1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Hauptproblem..." oninput="updateCollaborationPrompt()">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Details:</label>
+                    <input type="text" id="var2" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Weitere Details..." oninput="updateCollaborationPrompt()">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Kontext:</label>
+                    <input type="text" id="var3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Situativer Kontext..." oninput="updateCollaborationPrompt()">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="sendCollaborativePromptToKI()">🚀 Gemeinsam an KI senden</button>
+                <button class="btn btn-secondary" onclick="resetPrompt()">🔄 Zurücksetzen</button>
+                <button class="btn btn-secondary" onclick="closePromptModal()">❌ Schließen</button>
+            </div>
+
+            <div class="loading-indicator" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>KI analysiert den gemeinsamen Prompt...</p>
+            </div>
+
+            <div id="kiResponseSection" style="display: none;">
+                <div class="ki-response">
+                    <div style="font-weight: 600; color: #667eea; margin-bottom: 15px;">🤖 KI-Analyse (wird mit Coachee geteilt):</div>
+                    <div id="kiResponseText"></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="adoptCollaborativeResponse()">✅ Antwort übernehmen</button>
+                    <button class="btn btn-secondary" onclick="retryPrompt()">🔄 Nochmal versuchen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Modal -->
+    <div id="salesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🚀 Coach Mission Control - Vollversion</h3>
+                <button class="close-btn" onclick="closeSalesModal()">&times;</button>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #667eea; margin-bottom: 20px;">Revolutionieren Sie Ihr Coaching!</h2>
+                <p style="font-size: 1.2em; color: #666; margin-bottom: 20px;">
+                    Diese Demo zeigt nur 20% der Möglichkeiten. Die Vollversion bietet:
+                </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div style="background: #f8faff; padding: 20px; border-radius: 12px; border: 1px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">🔗 Echte Real-Time Kollaboration</h4>
+                    <p style="font-size: 0.9em;">WebSocket-basierte Live-Synchronisation zwischen Coach und Coachee in separaten Fenstern</p>
+                </div>
+                <div style="background: #f8faff; padding: 20px; border-radius: 12px; border: 1px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">📚 50+ KI-Templates</h4>
+                    <p style="font-size: 0.9em;">Systemische Fragen, Ressourcen-Aktivierung, Metaphern-Arbeit und viele mehr</p>
+                </div>
+                <div style="background: #f8faff; padding: 20px; border-radius: 12px; border: 1px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">🎛️ Profi-Dashboard</h4>
+                    <p style="font-size: 0.9em;">Vollständige Session-Verwaltung, Klienten-Management, automatische Dokumentation</p>
+                </div>
+                <div style="background: #f8faff; padding: 20px; border-radius: 12px; border: 1px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">📊 KI-Analysen</h4>
+                    <p style="font-size: 0.9em;">Automatische Session-Auswertung, Coaching-Hinweise, Fortschritts-Tracking</p>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">🎯 Early-Bird-Angebot</h3>
+                <div style="font-size: 1.8em; font-weight: bold; margin-bottom: 10px;">Nur 197€</div>
+                <div style="opacity: 0.9; margin-bottom: 20px;">Statt später 497€ • Einmalige Zahlung • Lebenslange Updates</div>
+                <button class="cta-button" onclick="window.open('mailto:info@coachmissioncontrol.com?subject=Coach Mission Control - Kaufinteresse&body=Ich interessiere mich für die Vollversion von Coach Mission Control zum Early-Bird-Preis von 197€.', '_blank')">
+                    💳 Jetzt bestellen - 197€
+                </button>
+            </div>
+
+            <div style="text-align: center; color: #666; font-size: 0.9em;">
+                <p><strong>💝 Ihr Vorsprung:</strong> Erste Coaches mit echtem triadischem KI-Coaching!</p>
+                <p><strong>🛡️ 30-Tage Geld-zurück-Garantie</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 Session exportieren</h3>
+                <button class="close-btn" onclick="closeExportModal()">&times;</button>
+            </div>
+            
+            <div style="display: grid; gap: 15px;">
+                <button class="btn btn-primary" onclick="exportNotes()" style="width: 100%; padding: 15px;">
+                    📄 Notizen als Markdown
+                </button>
+                <button class="btn btn-primary" onclick="exportSession()" style="width: 100%; padding: 15px;">
+                    📊 Komplette Session als JSON
+                </button>
+                <button class="btn btn-secondary" onclick="exportDemo()" style="width: 100%; padding: 15px;">
+                    🎯 Demo-Bericht für Management
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
