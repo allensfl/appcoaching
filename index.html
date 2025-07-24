@@ -18,23 +18,39 @@
             <h1>🤝 Coaching-Kollaboration</h1>
             <p>Gemeinsame KI-gestützte Analyse mit Ihrem Coach</p>
             <div style="font-size: 0.9em; opacity: 0.8; margin-top: 10px;">
-                Session-ID: <span id="collaborationSessionId"></span>
+                Session-ID: <span id="collaborationSessionId"></span> | 
+                Schritt: <span id="collaborationCurrentStep">1</span>/12
             </div>
         </div>
         
         <div class="collaboration-content">
+            <div class="step-progress-bar">
+                <div class="progress-fill" id="collaborationProgress"></div>
+                <div class="progress-text" id="collaborationProgressText">Schritt 1: Ziel & Problem</div>
+            </div>
+            
             <div class="prompt-display" id="collaborationPromptDisplay">
-                <h3 style="color: #667eea; margin-bottom: 15px;">📝 Aktueller Coaching-Prompt:</h3>
+                <h3 style="color: #667eea; margin-bottom: 15px;">📝 Coaching-Prompt (gemeinsam bearbeitet):</h3>
                 <div id="collaborationPromptText" class="waiting-state">
-                    Warten auf Prompt vom Coach...
+                    Warten auf Prompt-Bearbeitung mit Coach...
+                </div>
+                <div class="collaboration-actions" id="collaborationActions" style="display: none;">
+                    <button class="btn btn-success" onclick="approvePrompt()">✅ Prompt freigeben</button>
+                    <button class="btn btn-secondary" onclick="requestChanges()">✏️ Änderungen vorschlagen</button>
                 </div>
             </div>
             
             <div class="ki-response-display" id="collaborationKiResponse">
-                <h3 style="color: #059669; margin-bottom: 15px;">🤖 KI-Analyse:</h3>
+                <h3 style="color: #059669; margin-bottom: 15px;">🤖 KI-Antwort (für Sie persönlich):</h3>
                 <div id="collaborationResponseText" class="waiting-state">
-                    Hier erscheint die KI-Antwort, sobald der Prompt gesendet wurde...
+                    Hier erscheint die persönliche KI-Analyse, sobald der Prompt gesendet wurde...
                 </div>
+            </div>
+            
+            <div class="collaboration-feedback" id="collaborationFeedback" style="display: none;">
+                <h4>💬 Ihr Feedback:</h4>
+                <textarea id="coacheeFeedback" placeholder="Wie bewerten Sie diese KI-Analyse? Was passt? Was fehlt?"></textarea>
+                <button class="btn btn-primary" onclick="sendFeedback()">📤 Feedback senden</button>
             </div>
         </div>
     </div>
@@ -107,6 +123,7 @@
                 <div class="session-info">
                     <span id="currentTime"></span>
                     <button class="btn btn-secondary" onclick="showExportModal()">📥 Export</button>
+                    <button class="btn btn-secondary" onclick="showCoachKIModal()">🤖 Coach-KI</button>
                     <button class="btn btn-secondary" onclick="showSalesModal()">🛒 Kaufen</button>
                 </div>
             </div>
@@ -119,7 +136,7 @@
                 </div>
                 <div style="display: flex; align-items: center; flex: 1;">
                     <div class="link-display" id="collaborationLink" onclick="copyCollaborationLink()">
-                        https://coachingdemo.vercel.app/session/ABC123
+                        https://appcoaching-stable.vercel.app/session/ABC123
                     </div>
                     <button class="btn btn-success" onclick="copyCollaborationLink()">📋 Kopieren</button>
                     <button class="btn btn-secondary" onclick="openCollaborationWindow()" style="margin-left: 10px;">🪟 Öffnen</button>
@@ -161,21 +178,20 @@
 
                 <div class="ai-panel">
                     <div class="panel-header">
-                        🤖 KI-Assistent
+                        🤝 Kollaborative KI-Analyse
                         <div style="font-size: 0.8em; color: #666; font-weight: normal; margin-top: 5px;">
-                            Gemeinsame KI-Analysen mit Coachee
+                            Gemeinsame Prompt-Entwicklung mit Coachee
                         </div>
                     </div>
-                    <!-- Dynamischer Inhalt für den aktuellen Schritt -->
-                    <div id="stepContent">
-                        <!-- Inhalt wird hier von app.js gerendert -->
-                    </div>
+                    <div class="current-step-info" id="currentStepInfo"></div>
                     
-                    <!-- KI Instructions für Coach -->
-                    <div class="tool-section" style="border: 2px solid #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
-                        <h4 style="color: #d97706;">🤖 KI-Coach-Hinweise (privat)</h4>
-                        <div id="coachInstructions" style="font-size: 0.8em; line-height: 1.4; color: #92400e;">
-                            <p>Hier erscheinen strategische Hinweise für Sie als Coach basierend auf dem Gesprächsverlauf.</p>
+                    <!-- Aktuelle Kollaboration Status -->
+                    <div class="collaboration-status" id="collaborationStatus">
+                        <h4 style="color: #10b981;">📡 Kollaborations-Status:</h4>
+                        <div id="collaborationStatusText">Bereit für Zusammenarbeit</div>
+                        <div id="coacheeFeedbackDisplay" style="display: none;">
+                            <h5>💬 Feedback vom Coachee:</h5>
+                            <div id="feedbackText"></div>
                         </div>
                     </div>
                 </div>
@@ -183,9 +199,9 @@
                 <div class="tools-panel">
                     <div class="panel-header">🛠️ Coach-Tools</div>
                     
-                    <!-- Template Repository -->
+                    <!-- Template Repository mit Bearbeitung -->
                     <div class="template-repository">
-                        <h4 style="color: #2e7d32; margin-bottom: 10px;">📚 Template-Repository</h4>
+                        <h4 style="color: #2e7d32; margin-bottom: 10px;">📚 KI-Prompt Repository</h4>
                         <input type="text" class="template-search" id="templateSearch" placeholder="🔍 Suche: systemisch, ressourcen..." oninput="filterTemplates()">
                         <div id="templateList">
                             <!-- Templates werden dynamisch geladen -->
@@ -198,60 +214,149 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Prompt Bearbeitungs-Modal (ERWEITERT) -->
     <div id="promptModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content large-modal">
             <div class="modal-header">
-                <h3>✏️ KI-Prompt für Kollaboration bearbeiten</h3>
+                <h3>✏️ KI-Prompt gemeinsam bearbeiten - Schritt <span id="currentStepNumber">1</span></h3>
                 <button class="close-btn" onclick="closePromptModal()">&times;</button>
             </div>
             
-            <div class="collaboration-alert">
-                <strong>🔗 Live-Kollaboration:</strong> Ihr Coachee sieht diesen Prompt in Echtzeit im Kollaborations-Fenster!<br>
-                <em>Bearbeiten Sie gemeinsam den Prompt und senden Sie ihn dann an die KI.</em>
-            </div>
+            <div class="prompt-workflow">
+                <div class="workflow-step active" id="step1">
+                    <h4>1️⃣ Coach: Prompt vorbereiten</h4>
+                    <div class="prompt-editor">
+                        <label for="promptText">Basis-Prompt (aus Repository):</label>
+                        <textarea id="promptText" placeholder="Hier entsteht der Prompt für die KI-Analyse..." oninput="updatePromptPreview()"></textarea>
+                    </div>
 
-            <div class="prompt-editor">
-                <label for="promptText">Prompt-Text (wird live mit Coachee geteilt):</label>
-                <textarea id="promptText" placeholder="Hier entsteht der gemeinsame Prompt für die KI-Analyse..." oninput="updateCollaborationPrompt()"></textarea>
-            </div>
+                    <div style="margin: 20px 0;">
+                        <h4 style="color: #667eea; margin-bottom: 15px;">Variablen definieren:</h4>
+                        <div style="margin-bottom: 15px;">
+                            <label>Problem/Situation:</label>
+                            <input type="text" id="var1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Hauptproblem..." oninput="updatePromptPreview()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label>Details:</label>
+                            <input type="text" id="var2" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Weitere Details..." oninput="updatePromptPreview()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label>Kontext:</label>
+                            <input type="text" id="var3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Situativer Kontext..." oninput="updatePromptPreview()">
+                        </div>
+                    </div>
 
-            <div style="margin: 20px 0;">
-                <h4 style="color: #667eea; margin-bottom: 15px;">Variablen gemeinsam ausfüllen:</h4>
-                <div style="margin-bottom: 15px;">
-                    <label>Problem/Situation:</label>
-                    <input type="text" id="var1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Hauptproblem..." oninput="updateCollaborationPrompt()">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="sendToCollaboration()">📤 An Coachee senden</button>
+                        <button class="btn btn-secondary" onclick="resetPrompt()">🔄 Zurücksetzen</button>
+                    </div>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label>Details:</label>
-                    <input type="text" id="var2" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Weitere Details..." oninput="updateCollaborationPrompt()">
+
+                <div class="workflow-step" id="step2">
+                    <h4>2️⃣ Gemeinsame Bearbeitung</h4>
+                    <div class="collaboration-preview">
+                        <h5>Prompt-Vorschau (live mit Coachee):</h5>
+                        <div id="promptPreview" class="prompt-preview-box">
+                            Prompt wird hier angezeigt...
+                        </div>
+                    </div>
+                    
+                    <div class="collaboration-waiting" id="collaborationWaiting">
+                        <div class="waiting-animation">⏳</div>
+                        <p>Warten auf Coachee-Freigabe...</p>
+                        <div class="status-indicators">
+                            <div id="coacheeStatus">🟡 Coachee prüft Prompt</div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-success" onclick="sendCollaborativePromptToKI()" id="sendToKIBtn" disabled>🚀 Gemeinsam an KI senden</button>
+                        <button class="btn btn-secondary" onclick="goBackToEdit()">⬅️ Zurück zur Bearbeitung</button>
+                    </div>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label>Kontext:</label>
-                    <input type="text" id="var3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Situativer Kontext..." oninput="updateCollaborationPrompt()">
+
+                <div class="workflow-step" id="step3">
+                    <h4>3️⃣ KI-Antwort</h4>
+                    <div class="loading-indicator" id="loadingIndicator">
+                        <div class="spinner"></div>
+                        <p>KI analysiert den gemeinsamen Prompt...</p>
+                    </div>
+
+                    <div id="kiResponseSection" style="display: none;">
+                        <div class="ki-response">
+                            <div style="font-weight: 600; color: #667eea; margin-bottom: 15px;">🤖 KI-Antwort (wird an Coachee gesendet):</div>
+                            <div id="kiResponseText"></div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="adoptCollaborativeResponse()">✅ Antwort übernehmen</button>
+                            <button class="btn btn-secondary" onclick="retryPrompt()">🔄 Nochmal versuchen</button>
+                            <button class="btn btn-secondary" onclick="nextCoachingStep()">⏭️ Nächster Schritt</button>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="sendCollaborativePromptToKI()">🚀 Gemeinsam an KI senden</button>
-                <button class="btn btn-secondary" onclick="resetPrompt()">🔄 Zurücksetzen</button>
-                <button class="btn btn-secondary" onclick="closePromptModal()">❌ Schließen</button>
+    <!-- Coach-KI Modal (NEU) -->
+    <div id="coachKIModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🤖 Coach-KI Beratung</h3>
+                <button class="close-btn" onclick="closeCoachKIModal()">&times;</button>
             </div>
-
-            <div class="loading-indicator" id="loadingIndicator">
-                <div class="spinner"></div>
-                <p>KI analysiert den gemeinsamen Prompt...</p>
+            
+            <div class="coach-ki-interface">
+                <div class="coach-chat-messages" id="coachChatMessages">
+                    <div class="ki-message">
+                        <strong>🤖 Coach-KI:</strong> Hallo! Ich bin Ihr privater KI-Berater für Prozessfragen, Tools und Methoden. Wie kann ich Ihnen helfen?
+                    </div>
+                </div>
+                
+                <div class="coach-quick-questions">
+                    <h4>💡 Häufige Fragen:</h4>
+                    <button class="btn btn-secondary" onclick="askCoachKI('Welche Coaching-Technik eignet sich für diesen Schritt?')">🎯 Coaching-Technik empfehlen</button>
+                    <button class="btn btn-secondary" onclick="askCoachKI('Wie gehe ich mit Widerstand des Klienten um?')">🛡️ Widerstand überwinden</button>
+                    <button class="btn btn-secondary" onclick="askCoachKI('Welche Fragen sind jetzt zielführend?')">❓ Fragen-Vorschläge</button>
+                    <button class="btn btn-secondary" onclick="askCoachKI('Wo steht der Klient im Prozess?')">📊 Prozess-Einschätzung</button>
+                </div>
+                
+                <div class="coach-input-area">
+                    <textarea id="coachKIInput" placeholder="Stellen Sie hier Ihre Frage zur Coaching-Methodik, zum Prozess oder zu Tools..."></textarea>
+                    <button class="btn btn-primary" onclick="sendCoachKIQuestion()">📤 Frage senden</button>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div id="kiResponseSection" style="display: none;">
-                <div class="ki-response">
-                    <div style="font-weight: 600; color: #667eea; margin-bottom: 15px;">🤖 KI-Analyse (wird mit Coachee geteilt):</div>
-                    <div id="kiResponseText"></div>
+    <!-- Template Bearbeitungs-Modal (NEU) -->
+    <div id="templateEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Prompt-Template bearbeiten</h3>
+                <button class="close-btn" onclick="closeTemplateEditModal()">&times;</button>
+            </div>
+            
+            <div class="template-editor">
+                <div style="margin-bottom: 20px;">
+                    <label>Template-Titel:</label>
+                    <input type="text" id="templateTitle" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label>Prompt-Text:</label>
+                    <textarea id="templatePrompt" style="width: 100%; height: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Entwickle [TECHNIK] für [PROBLEM]..."></textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label>Variablen (mit Komma getrennt):</label>
+                    <input type="text" id="templateVariables" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="PROBLEM, SITUATION, ZIEL">
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="adoptCollaborativeResponse()">✅ Antwort übernehmen</button>
-                    <button class="btn btn-secondary" onclick="retryPrompt()">🔄 Nochmal versuchen</button>
+                    <button class="btn btn-primary" onclick="useEditedTemplate()">✅ Template verwenden</button>
+                    <button class="btn btn-secondary" onclick="closeTemplateEditModal()">❌ Abbrechen</button>
                 </div>
             </div>
         </div>
@@ -329,6 +434,7 @@
         </div>
     </div>
 
+    <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
