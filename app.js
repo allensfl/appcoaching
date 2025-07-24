@@ -1,3 +1,6 @@
+// COMPLETE FIXED app.js - Kollaborations-Sync Bug behoben
+// Ersetze die komplette app.js mit diesem Code
+
 // Global Variables
 let selectedClient = null;
 let currentStep = 1;
@@ -108,7 +111,7 @@ function openCollaborationWindow() {
     updateCollaborationStatus();
 }
 
-// Collaboration Mode Functions (ERWEITERT)
+// FIXED: Kollaborations-Sync Bug behoben
 function initCollaborationMode() {
     const sessionParam = urlParams.get('session') || window.location.pathname.split('/session/')[1];
     const sessionIdElement = document.getElementById('collaborationSessionId');
@@ -116,43 +119,83 @@ function initCollaborationMode() {
         sessionIdElement.textContent = sessionParam || 'DEMO';
     }
     
+    console.log("🔄 Kollaboration initialisiert für Session:", sessionParam);
+    
     // Initialize step progress
     updateCollaborationProgress(1);
+    
+    // KRITISCH: Verhindere Demo-Override von echten Daten
+    let hasRealData = false;
     
     // Start listening for messages from parent window
     window.addEventListener('message', function(event) {
         if (event.origin !== window.location.origin) return;
         
         if (event.data.type === 'collaborationData') {
+            console.log("📨 CollaborationData empfangen:", event.data.data);
+            hasRealData = true; // Markiere dass echte Daten da sind
             updateCollaborationDisplay(event.data.data);
         }
     });
     
-    // Load saved collaboration data
-    try {
-        const savedData = localStorage.getItem('collaborationData');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            updateCollaborationDisplay(data);
+    // Aggressive localStorage Überwachung mit Polling
+    function checkForStoredData() {
+        try {
+            const savedData = localStorage.getItem('collaborationData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                console.log("💾 Gespeicherte Daten gefunden:", data);
+                
+                // Nur verwenden wenn es echte Prompt-Daten sind (nicht Demo)
+                if (data.prompt && !data.prompt.includes('Demo:') && !data.prompt.includes('Warten auf') && data.prompt.length > 20) {
+                    hasRealData = true;
+                    updateCollaborationDisplay(data);
+                    console.log("✅ Echte Prompt-Daten geladen");
+                }
+            }
+        } catch (e) {
+            console.warn('❌ Fehler beim Laden der Kollaborationsdaten:', e);
         }
-    } catch (e) {
-        console.warn('Could not load collaboration data:', e);
     }
     
-    // For demo purposes: simulate some initial data after 2 seconds
+    // Sofort prüfen
+    checkForStoredData();
+    
+    // Aggressive Polling alle 200ms für 30 Sekunden
+    const pollInterval = setInterval(checkForStoredData, 200);
     setTimeout(() => {
-        if (!collaborationData.prompt) {
+        clearInterval(pollInterval);
+        console.log("⏰ Polling beendet");
+    }, 30000);
+    
+    // Storage Event Listener (zusätzlich)
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'collaborationData') {
+            console.log("🔔 Storage Event:", event.newValue);
+            checkForStoredData();
+        }
+    });
+    
+    // DEMO-OVERRIDE NUR WENN KEINE ECHTEN DATEN nach 2 Sekunden
+    setTimeout(() => {
+        if (!hasRealData) {
+            console.log("⚠️ Keine echten Daten - zeige Demo-Prompt");
             updateCollaborationDisplay({
                 prompt: 'Demo: Warten auf ersten Prompt vom Coach...',
                 response: '',
                 loading: false,
                 step: 1
             });
+        } else {
+            console.log("✅ Echte Daten vorhanden - Demo-Override übersprungen");
         }
     }, 2000);
 }
 
+// FIXED: Anti-Override-Schutz für echte Prompts
 function updateCollaborationDisplay(data) {
+    console.log("🔄 UpdateCollaborationDisplay aufgerufen mit:", data);
+    
     const promptElement = document.getElementById('collaborationPromptText');
     const responseElement = document.getElementById('collaborationResponseText');
     const actionsElement = document.getElementById('collaborationActions');
@@ -163,20 +206,101 @@ function updateCollaborationDisplay(data) {
         updateCollaborationProgress(data.step);
     }
     
+    // KRITISCH: Prompt-Display mit Anti-Override-Schutz
     if (data.prompt && promptElement) {
-        promptElement.innerHTML = `
-            <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px solid #667eea;">
-                ${data.prompt.replace(/\n/g, '<br>')}
-            </div>
-        `;
+        // Nur echte Prompts anzeigen (keine Demo-Texte)
+        const isRealPrompt = data.prompt && 
+                            !data.prompt.includes('Demo:') && 
+                            !data.prompt.includes('Warten auf') &&
+                            data.prompt.length > 20; // Echte Prompts sind länger
         
-        // Show approval actions if prompt is waiting for approval
-        if (!data.approved && actionsElement) {
-            actionsElement.style.display = 'flex';
+        if (isRealPrompt) {
+            console.log("✅ Zeige echten Prompt:", data.prompt.substring(0, 50) + "...");
+            
+            promptElement.innerHTML = `
+                <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px solid #667eea;">
+                    ${data.prompt.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            
+            // ANTI-VERSCHWINDEN: Element sichtbar halten
+            promptElement.style.display = 'block';
+            promptElement.style.visibility = 'visible';
+            
+            // Show approval actions if prompt is waiting for approval
+            if (!data.approved && actionsElement) {
+                actionsElement.style.display = 'flex';
+                console.log("👆 Approval-Buttons angezeigt");
+            }
+            
+            // Backup in localStorage mit Timestamp
+            try {
+                localStorage.setItem('lastRealPrompt', JSON.stringify({
+                    prompt: data.prompt,
+                    timestamp: Date.now(),
+                    step: data.step
+                }));
+                console.log("💾 Backup erstellt");
+            } catch(e) {
+                console.warn("Backup-Speicherung fehlgeschlagen:", e);
+            }
+            
+        } else if (data.prompt.includes('Demo:') || data.prompt.includes('Warten auf')) {
+            console.log("⚠️ Demo-Prompt erkannt - prüfe Backup");
+            
+            // Versuche letzten echten Prompt wiederherzustellen
+            try {
+                const backup = localStorage.getItem('lastRealPrompt');
+                if (backup) {
+                    const backupData = JSON.parse(backup);
+                    const age = Date.now() - backupData.timestamp;
+                    
+                    // Wenn Backup weniger als 10 Minuten alt
+                    if (age < 600000) {
+                        console.log("🔄 Wiederherstellung aus Backup");
+                        promptElement.innerHTML = `
+                            <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px solid #667eea;">
+                                ${backupData.prompt.replace(/\n/g, '<br>')}
+                            </div>
+                        `;
+                        promptElement.style.display = 'block';
+                        promptElement.style.visibility = 'visible';
+                        
+                        if (actionsElement) {
+                            actionsElement.style.display = 'flex';
+                        }
+                        return; // Wichtig: Demo-Update verhindern
+                    }
+                }
+            } catch(e) {
+                console.warn("Backup-Wiederherstellung fehlgeschlagen:", e);
+            }
+            
+            // Nur als letzter Ausweg Demo-Text anzeigen
+            console.log("📝 Zeige Demo-Text");
+            promptElement.innerHTML = `
+                <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px solid #667eea;">
+                    ${data.prompt.replace(/\n/g, '<br>')}
+                </div>
+            `;
+        } else {
+            // Normaler Prompt-Text
+            promptElement.innerHTML = `
+                <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px solid #667eea;">
+                    ${data.prompt.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            
+            // Show approval actions if prompt is waiting for approval
+            if (!data.approved && actionsElement) {
+                actionsElement.style.display = 'flex';
+            }
         }
     }
     
+    // Response-Handling (unverändert aber mit Logging)
     if (data.loading && responseElement) {
+        console.log("⏳ Loading-State anzeigen");
         responseElement.innerHTML = `
             <div class="loading-state">
                 <div class="spinner"></div>
@@ -185,6 +309,7 @@ function updateCollaborationDisplay(data) {
         `;
         if (actionsElement) actionsElement.style.display = 'none';
     } else if (data.response && responseElement) {
+        console.log("✅ KI-Response anzeigen");
         responseElement.innerHTML = `
             <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #10b981;">
                 ${data.response}
@@ -287,23 +412,66 @@ function sendFeedback() {
     }
 }
 
-// Broadcast data to collaboration window
+// FIXED: Robuste Broadcast-Funktion mit Retry-Mechanismus
 function broadcastToCollaboration(data) {
     collaborationData = { ...collaborationData, ...data, timestamp: new Date() };
     
-    // Send to collaboration window if open
+    console.log("📡 Broadcasting to collaboration:", collaborationData);
+    
+    // 1. PostMessage an Collaboration Window (höchste Priorität)
     if (window.collaborationWindow && !window.collaborationWindow.closed) {
-        window.collaborationWindow.postMessage({
-            type: 'collaborationData',
-            data: collaborationData
-        }, window.location.origin);
+        try {
+            window.collaborationWindow.postMessage({
+                type: 'collaborationData',
+                data: collaborationData
+            }, window.location.origin);
+            console.log("✅ PostMessage gesendet");
+        } catch(e) {
+            console.warn("❌ PostMessage fehlgeschlagen:", e);
+        }
     }
     
-    // Also store in localStorage as fallback
+    // 2. LocalStorage mit Retry-Mechanismus
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    function saveToStorage() {
+        try {
+            localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+            console.log("✅ LocalStorage gespeichert (Versuch " + (retryCount + 1) + ")");
+        } catch (e) {
+            console.warn("❌ LocalStorage Speicherung fehlgeschlagen:", e);
+            if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(saveToStorage, 100 * retryCount); // Exponential backoff
+            }
+        }
+    }
+    
+    saveToStorage();
+    
+    // 3. Zusätzlicher Broadcast über Custom Event
     try {
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    } catch (e) {
-        console.warn('Could not save collaboration data:', e);
+        window.dispatchEvent(new CustomEvent('collaborationUpdate', {
+            detail: collaborationData
+        }));
+        console.log("✅ Custom Event dispatched");
+    } catch(e) {
+        console.warn("❌ Custom Event fehlgeschlagen:", e);
+    }
+    
+    // 4. Backup-Storage für kritische Prompts
+    if (data.prompt && data.prompt.length > 20) {
+        try {
+            localStorage.setItem('collaborationBackup', JSON.stringify({
+                data: collaborationData,
+                timestamp: Date.now(),
+                sessionId: sessionId
+            }));
+            console.log("✅ Backup erstellt");
+        } catch(e) {
+            console.warn("❌ Backup fehlgeschlagen:", e);
+        }
     }
 }
 
@@ -1199,37 +1367,6 @@ function exportNotes() {
     
     markdown += `---\n*Erstellt mit Coach Mission Control Demo - Triadisches Coaching*`;
     
-    downloadFile(markdown, `Coach-Demo-${selectedClient || 'session'}-${sessionId}-${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
-    closeExportModal();
-}
-
-function exportSession() {
-    const sessionData = {
-        meta: {
-            sessionId: sessionId,
-            client: selectedClient ? clients[selectedClient] : null,
-            startTime: sessionStartTime,
-            currentStep: currentStep,
-            duration: sessionStartTime ? Math.round((new Date() - sessionStartTime) / 60000) : 0,
-            version: appConfig.version
-        },
-        notes: sessionNotes,
-        collaboration: {
-            linkGenerated: !!sessionId,
-            collaborationData: collaborationData,
-            windowOpen: !!(window.collaborationWindow && !window.collaborationWindow.closed)
-        },
-        coachKI: {
-            conversationLength: coachKIHistory.length,
-            lastQuestion: coachKIHistory.length > 1 ? coachKIHistory[coachKIHistory.length - 2].message : null
-        },
-        messages: Array.from(document.querySelectorAll('.message')).map(msg => ({
-            sender: msg.className.replace('message ', ''),
-            text: msg.querySelector('.text')?.textContent || '',
-            timestamp: msg.querySelector('.timestamp')?.textContent || ''
-        }))
-    };
-    
     downloadFile(
         JSON.stringify(sessionData, null, 2), 
         `Coach-Session-${selectedClient || 'demo'}-${sessionId}-${new Date().toISOString().split('T')[0]}.json`, 
@@ -1530,6 +1667,61 @@ function exportAnalytics() {
     );
 }
 
+// NEUE EMERGENCY RESTORE FUNKTIONEN
+function emergencyRestoreCollaboration() {
+    console.log("🚨 Emergency Restore gestartet");
+    
+    // Prüfe alle möglichen Datenquellen
+    const sources = [
+        'collaborationData',
+        'collaborationBackup', 
+        'lastRealPrompt'
+    ];
+    
+    for (const source of sources) {
+        try {
+            const stored = localStorage.getItem(source);
+            if (stored) {
+                const data = JSON.parse(stored);
+                console.log(`🔄 Wiederherstellung aus ${source}:`, data);
+                
+                if (source === 'collaborationBackup') {
+                    updateCollaborationDisplay(data.data);
+                } else if (source === 'lastRealPrompt') {
+                    updateCollaborationDisplay({
+                        prompt: data.prompt,
+                        step: data.step || 1,
+                        loading: false,
+                        approved: false
+                    });
+                } else {
+                    updateCollaborationDisplay(data);
+                }
+                
+                return true; // Erfolgreich wiederhergestellt
+            }
+        } catch(e) {
+            console.warn(`❌ Wiederherstellung aus ${source} fehlgeschlagen:`, e);
+        }
+    }
+    
+    console.log("❌ Keine wiederherstellbaren Daten gefunden");
+    return false;
+}
+
+// Debug-Hilfsfunktion für Browser Console
+window.debugCollaborationSync = function() {
+    console.log("=== COLLABORATION DEBUG ===");
+    console.log("CollaborationData:", localStorage.getItem('collaborationData'));
+    console.log("CollaborationBackup:", localStorage.getItem('collaborationBackup'));
+    console.log("LastRealPrompt:", localStorage.getItem('lastRealPrompt'));
+    console.log("Current collaborationData:", collaborationData);
+    
+    // Versuche Emergency Restore
+    console.log("Teste Emergency Restore...");
+    return emergencyRestoreCollaboration();
+};
+
 // Advanced debugging helpers
 function debugCollaboration() {
     console.log('=== COLLABORATION DEBUG INFO ===');
@@ -1548,12 +1740,41 @@ function debugCollaboration() {
 window.debugCollaboration = debugCollaboration;
 window.getSessionAnalytics = getSessionAnalytics;
 
-console.log('Coach Mission Control v3.0 - Production Ready System with 6 Workflow Enhancements loaded successfully!');
-console.log('🎯 New Features:');
-console.log('  ✅ 1. Coach bearbeitet Prompt vor Kollaboration');
-console.log('  ✅ 2. KI antwortet direkt dem Coachee');
-console.log('  ✅ 3. Schrittweise Prompt-Progression (12 Schritte)');
-console.log('  ✅ 4. Repository-Prompt-Bearbeitung');
-console.log('  ✅ 5. Separates Coach-KI-Fenster');
-console.log('  ✅ 6. Kollaborationsfenster-Sync-Fix');
-console.log('🚀 Type debugCollaboration() for collaboration debugging');
+console.log('🔧 Coach Mission Control v3.1 - KOLLABORATIONS-SYNC FIXED! 🎯');
+console.log('✅ Race Condition Problem behoben');
+console.log('✅ Anti-Override-Schutz für echte Prompts');
+console.log('✅ Robuste Backup- und Restore-Mechanismen');
+console.log('✅ Aggressive localStorage-Überwachung mit Polling');
+console.log('✅ Emergency Restore Funktionen');
+console.log('🚀 Type debugCollaborationSync() für Debug-Informationen');dFile(markdown, `Coach-Demo-${selectedClient || 'session'}-${sessionId}-${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
+    closeExportModal();
+}
+
+function exportSession() {
+    const sessionData = {
+        meta: {
+            sessionId: sessionId,
+            client: selectedClient ? clients[selectedClient] : null,
+            startTime: sessionStartTime,
+            currentStep: currentStep,
+            duration: sessionStartTime ? Math.round((new Date() - sessionStartTime) / 60000) : 0,
+            version: appConfig.version
+        },
+        notes: sessionNotes,
+        collaboration: {
+            linkGenerated: !!sessionId,
+            collaborationData: collaborationData,
+            windowOpen: !!(window.collaborationWindow && !window.collaborationWindow.closed)
+        },
+        coachKI: {
+            conversationLength: coachKIHistory.length,
+            lastQuestion: coachKIHistory.length > 1 ? coachKIHistory[coachKIHistory.length - 2].message : null
+        },
+        messages: Array.from(document.querySelectorAll('.message')).map(msg => ({
+            sender: msg.className.replace('message ', ''),
+            text: msg.querySelector('.text')?.textContent || '',
+            timestamp: msg.querySelector('.timestamp')?.textContent || ''
+        }))
+    };
+    
+    downloa
