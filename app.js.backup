@@ -1,4 +1,4 @@
-// COMPLETE FIXED app.js v2 - Kollaborations-Sync Bug UND Syntax Error behoben
+// COMPLETE FIXED app.js - Kollaborations-Sync Bug behoben
 // Ersetze die komplette app.js mit diesem Code
 
 // Global Variables
@@ -1341,7 +1341,7 @@ function closeExportModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// Export Functions
+// Export Functions (bleibt unverändert)
 function exportNotes() {
     if (sessionNotes.length === 0) {
         alert('Keine Notizen zum Exportieren vorhanden.');
@@ -1366,37 +1366,6 @@ function exportNotes() {
     });
     
     markdown += `---\n*Erstellt mit Coach Mission Control Demo - Triadisches Coaching*`;
-    
-    downloadFile(markdown, `Coach-Demo-${selectedClient || 'session'}-${sessionId}-${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
-    closeExportModal();
-}
-
-function exportSession() {
-    const sessionData = {
-        meta: {
-            sessionId: sessionId,
-            client: selectedClient ? clients[selectedClient] : null,
-            startTime: sessionStartTime,
-            currentStep: currentStep,
-            duration: sessionStartTime ? Math.round((new Date() - sessionStartTime) / 60000) : 0,
-            version: appConfig.version
-        },
-        notes: sessionNotes,
-        collaboration: {
-            linkGenerated: !!sessionId,
-            collaborationData: collaborationData,
-            windowOpen: !!(window.collaborationWindow && !window.collaborationWindow.closed)
-        },
-        coachKI: {
-            conversationLength: coachKIHistory.length,
-            lastQuestion: coachKIHistory.length > 1 ? coachKIHistory[coachKIHistory.length - 2].message : null
-        },
-        messages: Array.from(document.querySelectorAll('.message')).map(msg => ({
-            sender: msg.className.replace('message ', ''),
-            text: msg.querySelector('.text')?.textContent || '',
-            timestamp: msg.querySelector('.timestamp')?.textContent || ''
-        }))
-    };
     
     downloadFile(
         JSON.stringify(sessionData, null, 2), 
@@ -1777,5 +1746,35 @@ console.log('✅ Anti-Override-Schutz für echte Prompts');
 console.log('✅ Robuste Backup- und Restore-Mechanismen');
 console.log('✅ Aggressive localStorage-Überwachung mit Polling');
 console.log('✅ Emergency Restore Funktionen');
-console.log('✅ Syntax Error komplett behoben');
-console.log('🚀 Type debugCollaborationSync() für Debug-Informationen');
+console.log('🚀 Type debugCollaborationSync() für Debug-Informationen');dFile(markdown, `Coach-Demo-${selectedClient || 'session'}-${sessionId}-${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
+    closeExportModal();
+}
+
+function exportSession() {
+    const sessionData = {
+        meta: {
+            sessionId: sessionId,
+            client: selectedClient ? clients[selectedClient] : null,
+            startTime: sessionStartTime,
+            currentStep: currentStep,
+            duration: sessionStartTime ? Math.round((new Date() - sessionStartTime) / 60000) : 0,
+            version: appConfig.version
+        },
+        notes: sessionNotes,
+        collaboration: {
+            linkGenerated: !!sessionId,
+            collaborationData: collaborationData,
+            windowOpen: !!(window.collaborationWindow && !window.collaborationWindow.closed)
+        },
+        coachKI: {
+            conversationLength: coachKIHistory.length,
+            lastQuestion: coachKIHistory.length > 1 ? coachKIHistory[coachKIHistory.length - 2].message : null
+        },
+        messages: Array.from(document.querySelectorAll('.message')).map(msg => ({
+            sender: msg.className.replace('message ', ''),
+            text: msg.querySelector('.text')?.textContent || '',
+            timestamp: msg.querySelector('.timestamp')?.textContent || ''
+        }))
+    };
+    
+    downloa
