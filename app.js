@@ -1,5 +1,5 @@
-// KI-Coaching App - FINALE VOLLSTÄNDIGE VERSION
-// Datum: 25. Juli 2025 - GARANTIERT OHNE SYNTAX-FEHLER
+// KI-Coaching App - VOLLSTÄNDIG SYNCHRONISIERT
+// Datum: 25. Juli 2025 - ALLE EVENT-HANDLER KORREKT
 
 let currentState = {
     selectedClient: null,
@@ -19,31 +19,68 @@ let collaborationProtection = {
 // === INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 KI-Coaching App wird initialisiert...');
-    setTimeout(initializeApp, 100);
+    updateDebugInfo('App wird initialisiert...');
+    
+    // Mehrfache Versuche für data.js Loading
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const tryInit = () => {
+        attempts++;
+        updateDebugInfo(`Initialisierungsversuch ${attempts}/${maxAttempts}`);
+        
+        if (typeof clients !== 'undefined' && Array.isArray(clients)) {
+            initializeApp();
+        } else if (attempts < maxAttempts) {
+            setTimeout(tryInit, 200);
+        } else {
+            console.error('❌ KRITISCH: Daten konnten nicht geladen werden nach', maxAttempts, 'Versuchen');
+            updateDebugInfo('❌ FEHLER: Daten nicht geladen');
+            showNotification('Kritischer Fehler beim Laden der Daten', 'error');
+        }
+    };
+    
+    tryInit();
 });
 
 function initializeApp() {
     console.log('📋 App-Initialisierung gestartet');
+    updateDebugInfo('App-Initialisierung läuft...');
     
-    if (typeof clients === 'undefined' || !Array.isArray(clients)) {
-        console.error('❌ KRITISCHER FEHLER: clients Array nicht verfügbar');
-        setTimeout(initializeApp, 500);
+    // Validate data
+    if (!Array.isArray(clients) || clients.length === 0) {
+        console.error('❌ KRITISCHER FEHLER: clients Array nicht verfügbar oder leer');
+        updateDebugInfo('❌ Clients Array fehlt');
+        showNotification('Klienten-Daten konnten nicht geladen werden', 'error');
         return;
     }
     
     console.log('✅ Clients Array verfügbar:', clients.length, 'Klienten');
+    console.log('📋 Verfügbare Klienten:', clients.map(c => c.name));
+    updateDebugInfo(`✅ ${clients.length} Klienten geladen`);
     
+    // Initialize components
     loadClients();
     loadTemplates();
     restoreSessionState();
     checkCollaborationMode();
-    setupEventListeners();
+    setupEventListeners(); // KRITISCH: Event-Handler setup
     startCollaborationMonitoring();
     
+    // Global debug functions
     window.debugCollaborationSync = debugCollaborationSync;
     window.emergencyRestore = emergencyRestore;
+    window.currentState = currentState;
     
+    updateDebugInfo('✅ App vollständig geladen');
     showNotification('App erfolgreich geladen!', 'success');
+}
+
+function updateDebugInfo(message) {
+    const debugElement = document.getElementById('debugInfo');
+    if (debugElement) {
+        debugElement.textContent = message;
+    }
 }
 
 // === CLIENT MANAGEMENT ===
@@ -51,16 +88,11 @@ function loadClients() {
     const clientGrid = document.getElementById('clientGrid');
     if (!clientGrid) {
         console.error('❌ clientGrid Element nicht gefunden');
+        updateDebugInfo('❌ clientGrid fehlt');
         return;
     }
     
-    if (!Array.isArray(clients) || clients.length === 0) {
-        console.error('❌ Clients Array ist leer oder nicht verfügbar');
-        clientGrid.innerHTML = '<p class="error-message">Keine Klienten-Daten verfügbar</p>';
-        return;
-    }
-    
-    console.log('👥 Lade', clients.length, 'Klienten...');
+    console.log('👥 Lade', clients.length, 'Klienten in clientGrid...');
     clientGrid.innerHTML = '';
     
     clients.forEach(client => {
@@ -69,11 +101,16 @@ function loadClients() {
     });
     
     console.log('✅ Klienten erfolgreich geladen');
+    updateDebugInfo(`✅ ${clients.length} Klienten angezeigt`);
 }
 
 function createClientCard(client) {
     const card = document.createElement('div');
     card.className = 'client-card';
+    
+    // WICHTIG: Korrekte Event-Handler
+    card.addEventListener('click', () => selectClient(client.id));
+    
     card.innerHTML = `
         <div class="client-avatar">
             <img src="${client.avatar}" alt="${client.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\"><circle cx=\\"30\\" cy=\\"30\\" r=\\"30\\" fill=\\"%23ddd\\"/><text x=\\"30\\" y=\\"35\\" text-anchor=\\"middle\\" font-size=\\"20\\" fill=\\"white\\">${client.name.charAt(0)}</text></svg>'">
@@ -81,16 +118,19 @@ function createClientCard(client) {
         <h3>${client.name}</h3>
         <p class="client-role">${client.role}</p>
         <p class="client-info">${client.company}</p>
-        <button onclick="selectClient('${client.id}')" class="btn-primary">Auswählen</button>
+        <button class="btn-primary">Auswählen</button>
     `;
+    
     return card;
 }
 
 function selectClient(clientId) {
     console.log('👤 Klient wird ausgewählt:', clientId);
+    updateDebugInfo(`Wähle Klient: ${clientId}`);
     
     if (!Array.isArray(clients)) {
-        console.error('❌ FEHLER: clients ist kein Array:', typeof clients, clients);
+        console.error('❌ FEHLER: clients ist kein Array:', typeof clients);
+        updateDebugInfo('❌ clients Array fehlt');
         showNotification('Fehler beim Laden der Klienten-Daten', 'error');
         return;
     }
@@ -98,6 +138,7 @@ function selectClient(clientId) {
     const client = clients.find(c => c.id === clientId);
     if (!client) {
         console.error('❌ Klient nicht gefunden:', clientId);
+        updateDebugInfo(`❌ Klient ${clientId} nicht gefunden`);
         showNotification('Klient konnte nicht gefunden werden', 'error');
         return;
     }
@@ -107,15 +148,20 @@ function selectClient(clientId) {
     updateClientDisplay();
     saveSessionState();
     
+    // UI Updates
     document.querySelectorAll('.client-card').forEach(card => {
         card.classList.remove('selected');
     });
     
-    const clickedCard = event?.target?.closest('.client-card');
-    if (clickedCard) {
-        clickedCard.classList.add('selected');
-    }
+    // Find clicked card and select it
+    const allCards = document.querySelectorAll('.client-card');
+    allCards.forEach(card => {
+        if (card.querySelector('h3').textContent === client.name) {
+            card.classList.add('selected');
+        }
+    });
     
+    updateDebugInfo(`✅ ${client.name} ausgewählt`);
     showNotification(`Klient ${client.name} ausgewählt`, 'success');
 }
 
@@ -140,10 +186,13 @@ function updateClientDisplay() {
 function startSession() {
     if (!currentState.selectedClient) {
         alert('Bitte wählen Sie zuerst einen Klienten aus.');
+        updateDebugInfo('❌ Kein Klient ausgewählt');
         return;
     }
     
     console.log('🎯 Session gestartet für:', currentState.selectedClient.name);
+    updateDebugInfo(`🎯 Session: ${currentState.selectedClient.name}`);
+    
     currentState.sessionActive = true;
     currentState.sessionStartTime = new Date();
     
@@ -156,6 +205,8 @@ function startSession() {
 
 function stopSession() {
     console.log('⏹️ Session beendet');
+    updateDebugInfo('⏹️ Session beendet');
+    
     currentState.sessionActive = false;
     currentState.sessionStartTime = null;
     
@@ -228,10 +279,14 @@ function loadTemplates() {
     const searchBar = document.createElement('div');
     searchBar.className = 'template-search';
     searchBar.innerHTML = `
-        <input type="text" id="templateSearch" placeholder="Templates durchsuchen..." onkeyup="filterTemplates()">
-        <button onclick="clearTemplateSearch()" class="btn-secondary">Zurücksetzen</button>
+        <input type="text" id="templateSearch" placeholder="Templates durchsuchen...">
+        <button class="btn-secondary" onclick="clearTemplateSearch()">Zurücksetzen</button>
     `;
     container.appendChild(searchBar);
+    
+    // Event-Handler für Search
+    const searchInput = searchBar.querySelector('#templateSearch');
+    searchInput.addEventListener('keyup', filterTemplates);
     
     const grid = document.createElement('div');
     grid.className = 'template-grid';
@@ -254,10 +309,15 @@ function createTemplateCard(template) {
         <p class="template-category">${template.category}</p>
         <p class="template-description">${template.description}</p>
         <div class="template-actions">
-            <button onclick="useTemplate('${template.id}')" class="btn-primary">Verwenden</button>
-            <button onclick="editTemplate('${template.id}')" class="btn-secondary">Bearbeiten</button>
+            <button class="btn-primary use-template-btn" data-template-id="${template.id}">Verwenden</button>
+            <button class="btn-secondary edit-template-btn" data-template-id="${template.id}">Bearbeiten</button>
         </div>
     `;
+    
+    // Event-Handler für Template-Buttons
+    card.querySelector('.use-template-btn').addEventListener('click', () => useTemplate(template.id));
+    card.querySelector('.edit-template-btn').addEventListener('click', () => editTemplate(template.id));
+    
     return card;
 }
 
@@ -276,8 +336,11 @@ function filterTemplates() {
 }
 
 function clearTemplateSearch() {
-    document.getElementById('templateSearch').value = '';
-    filterTemplates();
+    const searchInput = document.getElementById('templateSearch');
+    if (searchInput) {
+        searchInput.value = '';
+        filterTemplates();
+    }
 }
 
 function useTemplate(templateId) {
@@ -391,6 +454,7 @@ function handleCollaborationUpdate(data) {
     collaborationProtection.lastUpdate = now;
     
     console.log('🔄 Kollaborations-Update verarbeitet:', data);
+    updateDebugInfo('🔄 Kollaboration aktualisiert');
     
     currentState.collaborationData = data;
     updateCollaborationDisplay(data);
@@ -429,12 +493,21 @@ function updateCollaborationDisplay(data) {
             `}
             
             <div class="collaboration-actions">
-                <button onclick="approvePrompt()" class="btn-success">✅ Genehmigen</button>
-                <button onclick="rejectPrompt()" class="btn-danger">❌ Ablehnen</button>
-                <button onclick="requestChanges()" class="btn-warning">🔄 Änderungen anfordern</button>
+                <button class="btn-success approve-btn">✅ Genehmigen</button>
+                <button class="btn-danger reject-btn">❌ Ablehnen</button>
+                <button class="btn-warning changes-btn">🔄 Änderungen anfordern</button>
             </div>
         </div>
     `;
+    
+    // Event-Handler für Collaboration-Buttons
+    const approveBtn = display.querySelector('.approve-btn');
+    const rejectBtn = display.querySelector('.reject-btn');
+    const changesBtn = display.querySelector('.changes-btn');
+    
+    if (approveBtn) approveBtn.addEventListener('click', approvePrompt);
+    if (rejectBtn) rejectBtn.addEventListener('click', rejectPrompt);
+    if (changesBtn) changesBtn.addEventListener('click', requestChanges);
     
     display.style.display = 'block';
 }
@@ -448,6 +521,7 @@ function sendToCollaboration() {
     }
     
     console.log('📤 Sende an Kollaboration:', editor.value);
+    updateDebugInfo('📤 Sende an Kollaboration');
     
     const collaborationData = {
         type: 'collaboration',
@@ -458,21 +532,18 @@ function sendToCollaboration() {
     };
     
     showNotification('Prompt wird an Kollaboration gesendet...', 'info');
-    
     generateAIResponse(collaborationData);
 }
 
 function generateAIResponse(collaborationData) {
     console.log('🤖 Generiere KI-Antwort...');
+    updateDebugInfo('🤖 KI-Antwort wird generiert');
     
     showNotification('KI-Antwort wird generiert...', 'info');
     
     try {
         localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-        console.log('💾 Prompt-Daten gespeichert (ohne AI-Response)');
-        
         window.parent.postMessage(collaborationData, '*');
-        console.log('📨 Prompt PostMessage gesendet');
     } catch (error) {
         console.error('Fehler beim Speichern der Prompt-Daten:', error);
     }
@@ -488,22 +559,16 @@ function generateAIResponse(collaborationData) {
         
         try {
             localStorage.setItem('collaborationData', JSON.stringify(fullData));
-            console.log('💾 Vollständige Kollaborations-Daten gespeichert:', fullData);
+            window.parent.postMessage(fullData, '*');
         } catch (error) {
             console.error('Fehler beim Speichern der vollständigen Kollaborations-Daten:', error);
-        }
-        
-        try {
-            window.parent.postMessage(fullData, '*');
-            console.log('📨 Vollständige PostMessage gesendet:', fullData);
-        } catch (error) {
-            console.error('Fehler beim Senden der PostMessage:', error);
         }
         
         if (currentState.collaborationMode) {
             handleCollaborationUpdate(fullData);
         }
         
+        updateDebugInfo('✅ KI-Antwort generiert');
         showNotification('KI-Antwort wurde generiert und gesendet.', 'success');
     }, 2000);
 }
@@ -522,17 +587,10 @@ function generateSimulatedResponse(prompt) {
     }
     
     const responses = [
-        `Basierend auf Ihrem Prompt "${prompt.substring(0, 50)}..." empfehle ich einen strukturierten Ansatz. Beginnen Sie mit einer offenen Frage, um die Perspektive Ihres Klienten zu verstehen. Führen Sie dann durch gezielte Nachfragen zu tieferen Einsichten.`,
-        
-        `Für diesen Coaching-Kontext schlage ich vor, zunächst den aktuellen Zustand zu explorieren. Nutzen Sie aktives Zuhören und Paraphrasieren, um Verständnis zu zeigen. Anschließend können Sie gemeinsam Ziele und Handlungsschritte entwickeln.`,
-        
-        `Ihr Prompt zeigt eine gute Coaching-Richtung. Ich empfehle, mit einer Skalierungsfrage zu beginnen: "Auf einer Skala von 1-10, wie zufrieden sind Sie aktuell mit...?" Dies hilft, den Status quo zu bewerten und Entwicklungspotentiale zu identifizieren.`,
-        
-        `Dieser Ansatz eignet sich gut für eine lösungsfokussierte Coaching-Session. Konzentrieren Sie sich auf Ressourcen und bereits vorhandene Stärken Ihres Klienten. Fragen Sie nach Ausnahmen: "Wann hat es schon einmal gut funktioniert?"`,
-        
-        `Für eine effektive Coaching-Intervention empfehle ich die GROW-Methode: Goal (Ziel), Reality (Realität), Options (Optionen), Will (Wille). Strukturieren Sie Ihr Gespräch entlang dieser vier Phasen für maximale Klarheit.`,
-        
-        `Nutzen Sie die Kraft des systemischen Coachings. Fragen Sie nach Auswirkungen auf andere Lebensbereiche: "Wenn Sie dieses Ziel erreichen, was würde sich in anderen Bereichen Ihres Lebens verändern?" Dies erweitert die Perspektive des Klienten.`
+        `Basierend auf Ihrem Prompt "${prompt.substring(0, 50)}..." empfehle ich einen strukturierten Ansatz. Beginnen Sie mit einer offenen Frage, um die Perspektive Ihres Klienten zu verstehen.`,
+        `Für diesen Coaching-Kontext schlage ich vor, zunächst den aktuellen Zustand zu explorieren. Nutzen Sie aktives Zuhören und Paraphrasieren, um Verständnis zu zeigen.`,
+        `Ihr Prompt zeigt eine gute Coaching-Richtung. Ich empfehle, mit einer Skalierungsfrage zu beginnen: "Auf einer Skala von 1-10, wie zufrieden sind Sie aktuell mit...?"`,
+        `Dieser Ansatz eignet sich gut für eine lösungsfokussierte Coaching-Session. Konzentrieren Sie sich auf Ressourcen und bereits vorhandene Stärken Ihres Klienten.`
     ];
     
     return responses[Math.floor(Math.random() * responses.length)];
@@ -540,14 +598,14 @@ function generateSimulatedResponse(prompt) {
 
 function approvePrompt() {
     console.log('✅ Prompt genehmigt');
-    const data = currentState.collaborationData;
+    updateDebugInfo('✅ Prompt genehmigt');
     
+    const data = currentState.collaborationData;
     if (data) {
         data.status = 'approved';
         data.approvedAt = new Date().toISOString();
         
         localStorage.setItem('collaborationData', JSON.stringify(data));
-        
         window.parent.postMessage({
             type: 'collaboration_approved',
             data: data
@@ -559,6 +617,8 @@ function approvePrompt() {
 
 function rejectPrompt() {
     console.log('❌ Prompt abgelehnt');
+    updateDebugInfo('❌ Prompt abgelehnt');
+    
     const reason = prompt('Grund für die Ablehnung (optional):');
     
     const data = currentState.collaborationData;
@@ -568,7 +628,6 @@ function rejectPrompt() {
         data.rejectionReason = reason || '';
         
         localStorage.setItem('collaborationData', JSON.stringify(data));
-        
         window.parent.postMessage({
             type: 'collaboration_rejected',
             data: data
@@ -580,8 +639,9 @@ function rejectPrompt() {
 
 function requestChanges() {
     console.log('🔄 Änderungen angefordert');
-    const changes = prompt('Welche Änderungen sind gewünscht?');
+    updateDebugInfo('🔄 Änderungen angefordert');
     
+    const changes = prompt('Welche Änderungen sind gewünscht?');
     if (!changes) return;
     
     const data = currentState.collaborationData;
@@ -591,7 +651,6 @@ function requestChanges() {
         data.requestedChanges = changes;
         
         localStorage.setItem('collaborationData', JSON.stringify(data));
-        
         window.parent.postMessage({
             type: 'collaboration_changes_requested',
             data: data
@@ -761,7 +820,33 @@ function restoreSessionState() {
 // === EVENT LISTENERS ===
 function setupEventListeners() {
     console.log('🎧 Event Listeners werden eingerichtet');
+    updateDebugInfo('🎧 Event Listeners setup');
     
+    // Session-Buttons - KRITISCH
+    const startBtn = document.getElementById('startSessionBtn');
+    const stopBtn = document.getElementById('stopSessionBtn');
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', startSession);
+        console.log('✅ Start-Button Event-Handler verbunden');
+    } else {
+        console.error('❌ Start-Button nicht gefunden');
+        updateDebugInfo('❌ Start-Button fehlt');
+    }
+    
+    if (stopBtn) {
+        stopBtn.addEventListener('click', stopSession);
+        console.log('✅ Stop-Button Event-Handler verbunden');
+    }
+    
+    // Coaching-Buttons
+    const sendBtn = document.getElementById('sendToCollaborationBtn');
+    const exportBtn = document.getElementById('exportMarkdownBtn');
+    
+    if (sendBtn) sendBtn.addEventListener('click', sendToCollaboration);
+    if (exportBtn) exportBtn.addEventListener('click', exportAsMarkdown);
+    
+    // Prompt Editor
     const editor = document.getElementById('promptEditor');
     if (editor) {
         editor.addEventListener('input', () => {
@@ -774,6 +859,7 @@ function setupEventListeners() {
         }
     }
     
+    // Navigation
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -783,10 +869,10 @@ function setupEventListeners() {
         });
     });
     
-    window.addEventListener('beforeunload', () => {
-        saveSessionState();
-    });
+    // Window events
+    window.addEventListener('beforeunload', saveSessionState);
     
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey || e.metaKey) {
             switch (e.key) {
@@ -804,6 +890,8 @@ function setupEventListeners() {
             }
         }
     });
+    
+    updateDebugInfo('✅ Event Listeners bereit');
 }
 
 function showSection(sectionId) {
@@ -819,7 +907,11 @@ function showSection(sectionId) {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
-    document.querySelector(`.nav-link[href="#${sectionId}"]`)?.classList.add('active');
+    
+    const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
 }
 
 // === DEBUG FUNCTIONS ===
@@ -844,6 +936,7 @@ function debugCollaborationSync() {
 
 function emergencyRestore() {
     console.log('🚨 Emergency Restore aktiviert');
+    updateDebugInfo('🚨 Emergency Restore');
     
     collaborationProtection = {
         isProtected: false,
@@ -865,6 +958,7 @@ function emergencyRestore() {
     
     if (!Array.isArray(clients)) {
         console.error('❌ KRITISCH: clients Array fehlt');
+        updateDebugInfo('❌ KRITISCH: clients fehlt');
         showNotification('Kritischer Fehler: Klienten-Daten fehlen', 'error');
     } else {
         console.log('✅ Clients Array OK:', clients.length, 'Einträge');
@@ -878,8 +972,11 @@ function emergencyRestore() {
     }
 }
 
+// Global error handler
 window.addEventListener('error', function(event) {
     console.error('🚨 Global Error:', event.error);
+    updateDebugInfo('🚨 Global Error aufgetreten');
+    
     if (event.error && event.error.message && event.error.message.includes('clients.find')) {
         console.error('❌ DETECTED: clients.find Error!');
         showNotification('Klienten-Daten-Fehler erkannt. Versuche Reparatur...', 'error');
@@ -899,4 +996,4 @@ window.addEventListener('error', function(event) {
     }
 });
 
-console.log('✅ KI-Coaching App vollständig geladen - Version: FINALE KOMPLETT ohne Syntax-Fehler');
+console.log('✅ KI-Coaching App vollständig geladen - Version: VOLLSTÄNDIG SYNCHRONISIERT mit Event-Handlers');
