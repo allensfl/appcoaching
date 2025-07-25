@@ -1,710 +1,742 @@
+// Coach Mission Control - Hauptanwendung
+// Triadisches Coaching mit KI-Unterstützung + 85+ Prompts
+
 // ===== GLOBALE VARIABLEN =====
 let currentClient = null;
-let sessionStartTime = null;
-let timerInterval = null;
-let currentPhase = 1;
-
-// ===== ECHTE GT-PROMPTS (WORTWÖRTLICH) =====
-const prompts = {
-    'GT1': {
-        title: 'Schritt 1: Erstanliegen',
-        text: 'Was ist für Sie heute wichtig? Was beschäftigt Sie? Womit soll ich Ihnen helfen?',
-        category: 'GT',
-        phase: 1
-    },
-    'GT2': {
-        title: 'Schritt 2: Konkretisierung',
-        text: 'Können Sie das konkreter beschreiben? Was genau ist passiert? Worum geht es dabei?',
-        category: 'GT',
-        phase: 1
-    },
-    'GT3': {
-        title: 'Schritt 3: Emotionale Befindlichkeit',
-        text: 'Wie geht es Ihnen damit? Was löst das in Ihnen aus? Welche Gefühle haben Sie dabei?',
-        category: 'GT',
-        phase: 1
-    },
-    'GT4': {
-        title: 'Schritt 4: Spannungsfeld',
-        text: 'In welchem Spannungsfeld bewegen Sie sich? Zwischen welchen Polen stehen Sie?',
-        category: 'GT',
-        phase: 2
-    },
-    'GT5': {
-        title: 'Schritt 5: Systemischer Kontext',
-        text: 'Wer ist noch beteiligt? Wie sehen die anderen das? Welche Rollen spielen die verschiedenen Beteiligten?',
-        category: 'GT',
-        phase: 2
-    },
-    'GT6': {
-        title: 'Schritt 6: Bisherige Lösungsversuche',
-        text: 'Was haben Sie bisher versucht? Was war hilfreich? Was hat nicht funktioniert?',
-        category: 'GT',
-        phase: 2
-    },
-    'GT7': {
-        title: 'Schritt 7: Zielklärung',
-        text: 'Was wollen Sie erreichen? Wie soll es werden? Was ist Ihr Ziel?',
-        category: 'GT',
-        phase: 3
-    },
-    'GT8': {
-        title: 'Schritt 8: Ressourcen',
-        text: 'Was können Sie gut? Welche Stärken haben Sie? Worauf können Sie zurückgreifen?',
-        category: 'GT',
-        phase: 3
-    },
-    'GT9': {
-        title: 'Schritt 9: Handlungsoptionen',
-        text: 'Welche Möglichkeiten sehen Sie? Was könnten Sie tun? Welche Optionen haben Sie?',
-        category: 'GT',
-        phase: 3
-    },
-    'GT10': {
-        title: 'Schritt 10: Entscheidung',
-        text: 'Wofür entscheiden Sie sich? Was wollen Sie konkret angehen? Was ist Ihr nächster Schritt?',
-        category: 'GT',
-        phase: 4
-    },
-    'GT11': {
-        title: 'Schritt 11: Umsetzungsplanung',
-        text: 'Wie setzen Sie das um? Bis wann? Was brauchen Sie dafür? Wer kann Sie unterstützen?',
-        category: 'GT',
-        phase: 4
-    },
-    'GT12': {
-        title: 'Schritt 12: Transfer',
-        text: 'Wie übertragen Sie das in Ihren Alltag? Was nehmen Sie mit? Wie bleiben Sie dran?',
-        category: 'GT',
-        phase: 4
-    },
-    'SF1': {
-        title: 'Wunderfrage',
-        text: 'Stellen Sie sich vor, über Nacht geschieht ein Wunder und Ihr Problem ist gelöst. Was wäre morgen früh anders?',
-        category: 'SF',
-        phase: 3
-    },
-    'SF2': {
-        title: 'Skalierungsfrage',
-        text: 'Auf einer Skala von 1-10: Wo stehen Sie heute? Was wäre ein Schritt in Richtung höherer Zahl?',
-        category: 'SF',
-        phase: 2
-    },
-    'DIAG1': {
-        title: 'Emotionscheck',
-        text: 'Auf einer Skala von 1-10: Wie belastet fühlen Sie sich gerade? Was trägt zu dieser Bewertung bei?',
-        category: 'DIAG',
-        phase: 1
-    },
-    'LÖS1': {
-        title: 'Erste kleine Schritte',
-        text: 'Was wäre der kleinste Schritt, den Sie heute noch gehen könnten? Was würde das bewirken?',
-        category: 'LÖS',
-        phase: 4
-    },
-    'META1': {
-        title: 'Prozess-Reflexion',
-        text: 'Wie erleben Sie unser Gespräch bisher? Was ist hilfreich? Was brauchen Sie noch?',
-        category: 'META',
-        phase: 2
-    }
-};
+let currentSession = null;
+let selectedPrompt = null;
+let sessionActive = false;
 
 // ===== INITIALISIERUNG =====
-function initializeApp() {
-    console.log('🚀 KI-Coaching App wird initialisiert...');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Coach Mission Control wird initialisiert...');
     
-    // Event Listeners
-    setupEventListeners();
-    
-    // UI Rendern
-    renderPrompts();
-    updateClientDisplay();
-    
-    console.log('✅ App vollständig geladen -', Object.keys(prompts).length, 'Prompts verfügbar');
-}
-
-// ===== EVENT LISTENERS =====
-function setupEventListeners() {
-    console.log('🎧 Event Listeners werden eingerichtet');
-    
-    // Tab Navigation
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => {
-            const target = button.dataset.tab;
-            showTab(target);
-        });
-    });
-    
-    // Prompt Suche
-    const searchInput = document.getElementById('promptSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', filterPrompts);
+    // Warten auf data.js oder Fallback verwenden
+    if (window.prompts && window.clients) {
+        initializeApp();
+    } else {
+        // Fallback-Daten laden
+        loadFallbackData();
+        setTimeout(initializeApp, 100);
     }
     
-    // Kategorien Filter
-    document.querySelectorAll('.category-filter').forEach(button => {
-        button.addEventListener('click', () => {
-            const category = button.dataset.category;
-            filterPromptsByCategory(category);
-            
-            // Visual Feedback
-            document.querySelectorAll('.category-filter').forEach(b => b.classList.remove('active'));
-            button.classList.add('active');
-        });
-    });
+    // Tab-Navigation initialisieren
+    initializeTabs();
     
-    // Keyboard Shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && !e.altKey && !e.shiftKey) {
-            const numbers = ['1','2','3','4','5','6','7','8','9'];
-            const keyIndex = numbers.indexOf(e.key);
-            
-            if (keyIndex !== -1) {
-                e.preventDefault();
-                const promptId = `GT${keyIndex + 1}`;
-                
-                if (prompts[promptId]) {
-                    loadPromptToEditor(promptId);
-                    console.log(`⌨️ Shortcut Ctrl+${keyIndex + 1} → ${promptId} geladen`);
-                }
-            }
+    // Debug-Panel starten
+    updateDebugPanel();
+    
+    console.log('✅ App erfolgreich initialisiert');
+});
+
+// ===== FALLBACK-DATEN =====
+function loadFallbackData() {
+    console.log('⚡ Lade Fallback-Daten...');
+    
+    // Minimale Fallback-Prompts falls data.js nicht lädt
+    window.prompts = {
+        GT1: {
+            text: "Ich habe folgendes Anliegen: [PROBLEMBESCHREIBUNG]. Kannst du mir helfen, das strukturiert zu durchdenken?",
+            category: "GT",
+            phase: 1,
+            description: "ERSTANLIEGEN - Offene Eingangsfrage zur Problemdefinition"
+        },
+        SF1: {
+            text: "Du bist mein Coaching Solution Finder. Spiegle mir mein Anliegen wider und hilf mir, es klarer zu verstehen. Was hörst du zwischen den Zeilen?",
+            category: "SF",
+            phase: 1,
+            description: "COACHING SOLUTION FINDER - Klarheit durch Spiegelung"
         }
-    });
-    
-    // Coach-KI Assistant
-    const coachInput = document.getElementById('coachKIInput');
-    if (coachInput) {
-        coachInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                askCoachKI(coachInput.value);
-                coachInput.value = '';
-            }
-        });
-    }
-    
-    // Quick Actions
-    document.querySelectorAll('.quick-action').forEach(button => {
-        button.addEventListener('click', () => {
-            const action = button.dataset.action;
-            askCoachKI(action);
-        });
-    });
-    
-    console.log('✅ Event Listeners bereit');
-}
-
-// ===== KLIENTEN MANAGEMENT =====
-function selectClient(clientId) {
-    const clients = {
-        'sarah': { name: 'Sarah Müller', avatar: '👩‍💼', role: 'Projektmanagerin' },
-        'marcus': { name: 'Marcus Schmidt', avatar: '👨‍💼', role: 'Vertriebsleiter' },
-        'lisa': { name: 'Lisa Weber', avatar: '👩‍💻', role: 'Marketing-Direktorin' },
-        'werner': { name: 'Werner Hoffmann', avatar: '👨‍🔧', role: 'IT-Leiter' }
     };
     
-    currentClient = clients[clientId];
-    
-    if (currentClient) {
-        // Visual Feedback
-        document.querySelectorAll('.client-card').forEach(card => card.classList.remove('selected'));
-        event.target.closest('.client-card').classList.add('selected');
-        
-        // Enable Session Button
-        const startBtn = document.getElementById('startSessionBtn');
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.textContent = `🎯 Session mit ${currentClient.name} starten`;
+    // Fallback-Klienten
+    window.clients = [
+        {
+            id: 1,
+            name: "Sarah Müller",
+            age: 42,
+            profession: "Projektmanagerin",
+            topics: ["Work-Life-Balance", "Führung", "Stressmanagement"]
+        },
+        {
+            id: 2,
+            name: "Thomas Weber",
+            age: 58,
+            profession: "Senior Manager",
+            topics: ["Ruhestand", "Sinnfindung", "Neuorientierung"]
         }
-        
-        updateClientDisplay();
-        
-        console.log('👤 Klient ausgewählt:', currentClient.name);
-    }
+    ];
+    
+    console.log('✅ Fallback-Daten geladen');
 }
 
+// ===== TAB-NAVIGATION =====
+function initializeTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            
+            // Alle Tabs deaktivieren
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Gewählten Tab aktivieren
+            btn.classList.add('active');
+            document.getElementById(targetTab + 'Tab').classList.add('active');
+            
+            // Spezielle Aktionen für bestimmte Tabs
+            if (targetTab === 'coaching') {
+                renderPrompts(); // Prompts bei Tab-Wechsel neu rendern
+            }
+        });
+    });
+}
+
+// ===== APP-INITIALISIERUNG =====
+function initializeApp() {
+    console.log('🎯 Initialisiere Hauptfunktionen...');
+    
+    // Klienten anzeigen
+    renderClients();
+    
+    // Prompts anzeigen
+    renderPrompts();
+    
+    // Event-Listener registrieren
+    setupEventListeners();
+    
+    // Filter initialisieren
+    setupFilters();
+    
+    // Kategorie-Filter mit allen verfügbaren Kategorien füllen
+    populateCategoryFilter();
+    
+    console.log('✅ App vollständig initialisiert');
+}
+
+// ===== KATEGORIE-FILTER BEFÜLLEN =====
+function populateCategoryFilter() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (!categoryFilter) return;
+    
+    // Alle verfügbaren Kategorien aus den Prompts extrahieren
+    const categories = [...new Set(Object.values(window.prompts || {}).map(p => p.category))];
+    
+    // Kategorie-Namen mapping
+    const categoryNames = {
+        'GT': 'Geißler Triadisch (GT)',
+        'SF': 'Solution Finder (SF)', 
+        'DIAG': 'Diagnostik (DIAG)',
+        'LÖS': 'Lösungsorientiert (LÖS)',
+        'META': 'Meta-Coaching (META)',
+        'WARN': 'Warnsignale (WARN)',
+        'QK': 'Qualitätskontrolle (QK)',
+        'PAAR': 'Paar-Coaching (PAAR)',
+        'GRUPPE': 'Gruppen-Coaching (GRUPPE)',
+        'LIVE': 'Live-Support (LIVE)',
+        'MOBIL': 'Mobile Integration (MOBIL)',
+        'AVA': 'Avatar-Aufstellungen (AVA)'
+    };
+    
+    // Filter-Optionen erstellen
+    categoryFilter.innerHTML = '<option value="all">Alle Kategorien</option>';
+    categories.sort().forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = categoryNames[cat] || cat;
+        categoryFilter.appendChild(option);
+    });
+    
+    console.log('✅ Kategorie-Filter mit', categories.length, 'Kategorien befüllt');
+}
+
+// ===== KLIENTEN-RENDERING =====
+function renderClients() {
+    const container = document.getElementById('clientsContainer');
+    if (!container) return;
+    
+    const clients = window.clients || [];
+    
+    container.innerHTML = clients.map(client => `
+        <div class="client-card" data-client-id="${client.id}">
+            <div class="client-name">${client.name}</div>
+            <div class="client-info">
+                <div class="client-age">${client.age} Jahre • ${client.profession}</div>
+                <div class="client-topics">
+                    ${client.topics.map(topic => `<span class="topic-tag">${topic}</span>`).join('')}
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Click-Handler für Klienten-Auswahl
+    container.addEventListener('click', (e) => {
+        const clientCard = e.target.closest('.client-card');
+        if (clientCard) {
+            selectClient(parseInt(clientCard.dataset.clientId));
+        }
+    });
+    
+    console.log('✅ Klienten gerendert:', clients.length);
+}
+
+// ===== PROMPT-RENDERING (ERWEITERT FÜR 85+ PROMPTS) =====
+function renderPrompts() {
+    const container = document.getElementById('promptsContainer');
+    if (!container) return;
+    
+    const prompts = window.prompts || {};
+    const promptsList = Object.entries(prompts);
+    
+    if (promptsList.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 12px; border: 2px dashed #cbd5e1;">
+                <h3>🚀 Prompt-Bibliothek wird geladen...</h3>
+                <p>Prüfe die data.js Datei.</p>
+                <button onclick="forcePromptLoad()" style="background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">🔄 Neu laden</button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Prompts nach Kategorie sortieren
+    const sortedPrompts = promptsList.sort(([keyA, promptA], [keyB, promptB]) => {
+        // Erst nach Kategorie, dann nach Key sortieren
+        if (promptA.category !== promptB.category) {
+            return promptA.category.localeCompare(promptB.category);
+        }
+        return keyA.localeCompare(keyB);
+    });
+    
+    container.innerHTML = sortedPrompts.map(([key, prompt]) => {
+        // Kategorie-Farben
+        const categoryColors = {
+            'GT': '#3b82f6',     // Blau
+            'SF': '#10b981',     // Grün  
+            'DIAG': '#f59e0b',   // Orange
+            'LÖS': '#8b5cf6',    // Lila
+            'META': '#6b7280',   // Grau
+            'WARN': '#ef4444',   // Rot
+            'QK': '#ef4444',     // Rot
+            'PAAR': '#ec4899',   // Pink
+            'GRUPPE': '#06b6d4', // Cyan
+            'LIVE': '#84cc16',   // Lime
+            'MOBIL': '#f97316',  // Orange-Rot
+            'AVA': '#8b5cf6'     // Lila
+        };
+        
+        const categoryColor = categoryColors[prompt.category] || '#64748b';
+        
+        return `
+            <div class="prompt-card" data-prompt-key="${key}" data-category="${prompt.category}" data-phase="${prompt.phase}" 
+                 style="margin-bottom: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 12px; background: white; cursor: pointer; transition: all 0.3s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <strong style="color: ${categoryColor}; font-size: 1.1rem;">${key}</strong>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="background: ${categoryColor}20; color: ${categoryColor}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${prompt.category}</span>
+                        ${prompt.phase ? `<span style="background: #f1f5f9; color: #475569; padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.75rem;">Phase ${prompt.phase}</span>` : ''}
+                    </div>
+                </div>
+                <div style="font-weight: 600; margin-bottom: 0.75rem; line-height: 1.4; color: #1e293b;">
+                    ${prompt.description}
+                </div>
+                <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; line-height: 1.5;">
+                    ${prompt.text.length > 150 ? prompt.text.substring(0, 150) + '...' : prompt.text}
+                </div>
+                ${prompt.methodeninfo ? `<div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; font-style: italic;">${prompt.methodeninfo}</div>` : ''}
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="usePrompt('${key}')" style="background: ${categoryColor}; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; flex: 1;">📤 Verwenden</button>
+                    <button onclick="showPromptDetails('${key}')" style="background: #f8fafc; color: #475569; padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-weight: 500;">👁️ Details</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    console.log('✅ Prompts gerendert:', promptsList.length);
+    
+    // Statistik anzeigen
+    const stats = getPromptStatistics();
+    console.log('📊 Prompt-Statistiken:', stats);
+}
+
+// ===== PROMPT-STATISTIKEN =====
+function getPromptStatistics() {
+    const prompts = window.prompts || {};
+    const stats = {
+        total: Object.keys(prompts).length,
+        byCategory: {},
+        byPhase: {}
+    };
+    
+    Object.values(prompts).forEach(prompt => {
+        // Nach Kategorie
+        stats.byCategory[prompt.category] = (stats.byCategory[prompt.category] || 0) + 1;
+        
+        // Nach Phase
+        const phase = prompt.phase || 'Meta';
+        stats.byPhase[phase] = (stats.byPhase[phase] || 0) + 1;
+    });
+    
+    return stats;
+}
+
+// ===== PROMPT VERWENDEN =====
+function usePrompt(promptKey) {
+    const prompt = window.prompts[promptKey];
+    if (!prompt) return;
+    
+    // Prompt in Editor laden
+    const editor = document.getElementById('promptEditor');
+    if (editor) {
+        editor.value = `${promptKey}: ${prompt.description}\n\n${prompt.text}\n\n${prompt.methodeninfo ? `Methodik: ${prompt.methodeninfo}` : ''}`;
+    }
+    
+    // Prompt als ausgewählt markieren
+    selectedPrompt = { key: promptKey, ...prompt };
+    
+    // Visuelle Markierung
+    document.querySelectorAll('.prompt-card').forEach(card => {
+        card.classList.remove('selected');
+        card.style.transform = '';
+        card.style.boxShadow = '';
+    });
+    
+    const selectedCard = document.querySelector(`[data-prompt-key="${promptKey}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        selectedCard.style.transform = 'translateY(-2px)';
+        selectedCard.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.2)';
+        selectedCard.style.borderColor = '#3b82f6';
+    }
+    
+    // Erfolgs-Notification
+    showNotification(`✅ ${promptKey} geladen!`, 'success');
+    
+    console.log('✅ Prompt geladen:', promptKey);
+}
+
+// ===== PROMPT DETAILS ANZEIGEN =====
+function showPromptDetails(promptKey) {
+    const prompt = window.prompts[promptKey];
+    if (!prompt) return;
+    
+    const details = `
+Prompt: ${promptKey}
+Kategorie: ${prompt.category}
+Phase: ${prompt.phase || 'Meta'}
+
+Beschreibung:
+${prompt.description}
+
+Volltext:
+${prompt.text}
+
+${prompt.methodeninfo ? `Methodeninfo:\n${prompt.methodeninfo}` : ''}
+    `.trim();
+    
+    alert(details);
+}
+
+// ===== NOTIFICATION SYSTEM =====
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b'
+    };
+    
+    notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; 
+        background: ${colors[type]}; color: white;
+        padding: 12px 20px; border-radius: 8px; z-index: 1000;
+        font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// ===== KLIENTEN-AUSWAHL =====
+function selectClient(clientId) {
+    const client = window.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    // Visuelle Auswahl
+    document.querySelectorAll('.client-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    document.querySelector(`[data-client-id="${clientId}"]`).classList.add('selected');
+    
+    // Globale Variable setzen
+    currentClient = client;
+    
+    // Session-Button anzeigen
+    const actionSection = document.getElementById('clientActionSection');
+    if (actionSection) {
+        actionSection.style.display = 'block';
+    }
+    
+    updateDebugPanel();
+    console.log('✅ Klient ausgewählt:', client.name);
+}
+
+// ===== SESSION-START =====
 function startSession() {
     if (!currentClient) {
         alert('Bitte wählen Sie zuerst einen Klienten aus.');
         return;
     }
     
-    sessionStartTime = new Date();
-    startTimer();
-    showTab('coaching');
+    // Session aktivieren
+    sessionActive = true;
+    currentSession = {
+        client: currentClient,
+        startTime: new Date(),
+        phase: 1,
+        prompts: []
+    };
     
-    console.log('🎯 Session gestartet mit:', currentClient.name);
+    // Zur Coaching-Tab wechseln
+    switchToTab('coaching');
+    
+    // Session-Info anzeigen
+    const sessionInfo = document.getElementById('sessionInfo');
+    if (sessionInfo) {
+        sessionInfo.style.display = 'block';
+        document.getElementById('currentClient').textContent = currentClient.name;
+        document.getElementById('currentPhase').textContent = 'Phase 1: Problem & Ziel';
+        document.getElementById('sessionStatus').textContent = 'Aktiv';
+    }
+    
+    updateDebugPanel();
+    console.log('🚀 Session gestartet für:', currentClient.name);
 }
 
-function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
+// ===== TAB-WECHSEL =====
+function switchToTab(tabName) {
+    // Alle Tabs deaktivieren
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    timerInterval = setInterval(() => {
-        const elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
+    // Gewählten Tab aktivieren
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
+
+// ===== EVENT-LISTENER SETUP =====
+function setupEventListeners() {
+    // Session-Start Button
+    const startBtn = document.getElementById('startSessionBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', startSession);
+    }
+    
+    // Editor-Buttons
+    const sendBtn = document.getElementById('sendToCollaboration');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendToCollaboration);
+    }
+    
+    const clearBtn = document.getElementById('clearEditor');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            document.getElementById('promptEditor').value = '';
+            selectedPrompt = null;
+            document.querySelectorAll('.prompt-card').forEach(card => {
+                card.classList.remove('selected');
+                card.style.transform = '';
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+            });
+        });
+    }
+    
+    // Kollaborations-Buttons
+    const sendToAIBtn = document.getElementById('sendToAI');
+    if (sendToAIBtn) {
+        sendToAIBtn.addEventListener('click', sendToAI);
+    }
+    
+    console.log('✅ Event-Listener registriert');
+}
+
+// ===== FILTER-SETUP =====
+function setupFilters() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const phaseFilter = document.getElementById('phaseFilter');
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', filterPrompts);
+    }
+    if (phaseFilter) {
+        phaseFilter.addEventListener('change', filterPrompts);
+    }
+}
+
+// ===== PROMPT-FILTERUNG =====
+function filterPrompts() {
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    const phaseFilter = document.getElementById('phaseFilter').value;
+    
+    const promptCards = document.querySelectorAll('.prompt-card');
+    let visibleCount = 0;
+    
+    promptCards.forEach(card => {
+        const promptKey = card.dataset.promptKey;
+        const prompt = window.prompts[promptKey];
         
-        const timerElement = document.getElementById('sessionTimer');
-        if (timerElement) {
-            timerElement.textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        let showCard = true;
+        
+        if (categoryFilter !== 'all' && prompt.category !== categoryFilter) {
+            showCard = false;
         }
-    }, 1000);
-}
-
-function updateClientDisplay() {
-    const displays = ['currentClientDisplay', 'coachingClientDisplay'];
-    
-    displays.forEach(id => {
-        const element = document.getElementById(id);
-        if (element && currentClient) {
-            element.innerHTML = `${currentClient.avatar} ${currentClient.name}`;
+        
+        if (phaseFilter !== 'all' && prompt.phase.toString() !== phaseFilter) {
+            showCard = false;
         }
-    });
-}
-
-// ===== PHASEN MANAGEMENT =====
-function setPhase(phaseId) {
-    currentPhase = phaseId;
-    
-    // Update Visual
-    document.querySelectorAll('.phase-card').forEach(card => {
-        card.classList.remove('active');
+        
+        card.style.display = showCard ? 'block' : 'none';
+        if (showCard) visibleCount++;
     });
     
-    const activeCard = document.querySelector(`[data-phase="${phaseId}"]`);
-    if (activeCard) {
-        activeCard.classList.add('active');
-    }
-    
-    // Update Phase Status
-    const phaseStatus = document.getElementById('phaseStatus');
-    if (phaseStatus) {
-        const phaseNames = {
-            1: 'Phase 1: Erstanliegen',
-            2: 'Phase 2: Analyse', 
-            3: 'Phase 3: Lösungen',
-            4: 'Phase 4: Umsetzung'
-        };
-        phaseStatus.textContent = phaseNames[phaseId];
-    }
-    
-    // Filter Prompts by Phase
-    filterPromptsByPhase(phaseId);
-    
-    console.log('📊 Phase gewechselt zu:', phaseId);
+    console.log(`📊 Filter angewendet: ${visibleCount} von ${promptCards.length} Prompts sichtbar`);
 }
 
-// ===== PROMPT MANAGEMENT =====
-function renderPrompts() {
-    const container = document.getElementById('promptsContainer');
-    if (!container) return;
-    
-    const promptsArray = Object.entries(prompts);
-    
-    container.innerHTML = promptsArray.map(([id, prompt]) => `
-        <div class="prompt-card" data-category="${prompt.category}" data-phase="${prompt.phase}">
-            <div class="prompt-header">
-                <span class="prompt-id">${id}</span>
-                <span class="prompt-category">${prompt.category}</span>
-            </div>
-            <h4>${prompt.title}</h4>
-            <p class="prompt-text">${prompt.text}</p>
-            <div class="prompt-actions">
-                <button onclick="copyPrompt('${id}')" class="btn-small">📋 Copy</button>
-                <button onclick="loadPromptToEditor('${id}')" class="btn-small">📝 Load</button>
-                <button onclick="sendPromptDirectly('${id}')" class="btn-small primary">📤 Send</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function copyPrompt(promptId) {
-    const prompt = prompts[promptId];
-    if (prompt) {
-        navigator.clipboard.writeText(prompt.text).then(() => {
-            showToast('Prompt kopiert!');
-        });
-    }
-}
-
-function loadPromptToEditor(promptId) {
-    const prompt = prompts[promptId];
-    if (prompt) {
-        const textarea = document.getElementById('promptTextarea');
-        if (textarea) {
-            textarea.value = prompt.text;
-            showTab('coaching'); // Switch to coaching tab
-            showToast(`${promptId} in Editor geladen`);
-        }
-    }
-}
-
-function sendPromptDirectly(promptId) {
-    const prompt = prompts[promptId];
-    if (prompt) {
-        // Load to editor first
-        loadPromptToEditor(promptId);
-        // Then send to collaboration
-        setTimeout(() => {
-            sendToCollaboration();
-        }, 100);
-    }
-}
-
-// ===== PROMPT EDITOR =====
-function copyPromptText() {
-    const textarea = document.getElementById('promptTextarea');
-    if (textarea && textarea.value) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
-            showToast('Text kopiert!');
-        });
-    }
-}
-
-function clearEditor() {
-    const textarea = document.getElementById('promptTextarea');
-    if (textarea) {
-        textarea.value = '';
-        showToast('Editor geleert');
-    }
-}
-
+// ===== AN KOLLABORATION SENDEN =====
 function sendToCollaboration() {
-    const textarea = document.getElementById('promptTextarea');
-    if (!textarea || !textarea.value.trim()) {
-        alert('Bitte geben Sie einen Prompt ein oder wählen Sie einen aus dem Repository.');
+    const editor = document.getElementById('promptEditor');
+    const content = editor.value.trim();
+    
+    if (!content) {
+        alert('Bitte geben Sie einen Prompt ein.');
         return;
     }
     
-    const promptText = textarea.value.trim();
+    // Zur Kollaborations-Tab wechseln
+    switchToTab('collaboration');
     
-    // Save to localStorage for collaboration
-    const collaborationData = {
-        prompt: promptText,
-        sender: 'Coach',
-        timestamp: new Date().toISOString(),
-        client: currentClient?.name || 'Unbekannt'
-    };
-    
-    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    
-    // Switch to collaboration tab
-    showTab('collaboration');
-    
-    // Update collaboration thread
-    updateCollaborationThread(collaborationData);
-    
-    console.log('📤 Prompt an Kollaboration gesendet:', promptText.substring(0, 50) + '...');
-    showToast('Prompt an Kollaboration gesendet!');
-}
-
-// ===== KOLLABORATION =====
-function updateCollaborationThread(data) {
-    const thread = document.getElementById('collaborationThread');
-    if (!thread) return;
-    
-    // Clear initial message
-    thread.innerHTML = '';
-    
-    // Coach Message
-    const coachMessage = document.createElement('div');
-    coachMessage.className = 'message coach-message';
-    coachMessage.innerHTML = `
-        <div class="message-header">
-            <span class="sender">👨‍💼 Coach</span>
-            <span class="timestamp">${new Date(data.timestamp).toLocaleTimeString()}</span>
-        </div>
-        <div class="message-content">${data.prompt}</div>
-    `;
-    thread.appendChild(coachMessage);
-    
-    // Add AI Response after delay
-    setTimeout(() => {
-        generateAIResponse(data.prompt, thread);
-    }, 2000);
-    
-    // Scroll to bottom
-    thread.scrollTop = thread.scrollHeight;
-}
-
-function generateAIResponse(promptText, thread) {
-    // Simple AI response based on prompt type
-    let aiResponse = 'Das ist ein wichtiger Punkt. Lassen Sie uns das gemeinsam weiter erkunden.';
-    
-    if (promptText.includes('Spannungsfeld') || promptText.includes('Polen')) {
-        aiResponse = 'Spannungsfelder sind oft der Schlüssel zur Lösung. Zwischen welchen Polen bewegen Sie sich genau? Eine Avatar-Aufstellung könnte hier hilfreich sein.';
-    } else if (promptText.includes('Gefühle') || promptText.includes('Ihnen damit')) {
-        aiResponse = 'Ihre Gefühle sind völlig verständlich und wichtig. Sie zeigen uns, was Ihnen wirklich am Herzen liegt.';
-    } else if (promptText.includes('Ziel') || promptText.includes('erreichen')) {
-        aiResponse = 'Ein klares Ziel ist der erste Schritt zur Veränderung. Was wäre Ihr ideales Ergebnis?';
-    } else if (promptText.includes('Stärken') || promptText.includes('gut')) {
-        aiResponse = 'Ressourcen zu aktivieren ist kraftvoll. Sie haben mehr Stärken, als Sie vielleicht gerade sehen.';
-    }
-    
-    const aiMessage = document.createElement('div');
-    aiMessage.className = 'message ai-message';
-    aiMessage.innerHTML = `
-        <div class="message-header">
-            <span class="sender">🤖 KI-Assistant</span>
-            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
-        </div>
-        <div class="message-content">${aiResponse}</div>
-        <div class="message-actions">
-            <button onclick="approveResponse()" class="btn-small success">✅ Genehmigen</button>
-            <button onclick="modifyResponse()" class="btn-small">🔄 Bearbeiten</button>
-        </div>
-    `;
-    thread.appendChild(aiMessage);
-    
-    // Scroll to bottom
-    thread.scrollTop = thread.scrollHeight;
-}
-
-function clearCollaboration() {
-    const thread = document.getElementById('collaborationThread');
-    if (thread) {
-        thread.innerHTML = `
-            <div class="initial-message">
-                <p>⏳ Warten auf Coaching-Prompt...</p>
-                <p>Sobald Sie einen Prompt aus dem Coaching-Bereich senden, erscheint er hier für den Coachee.</p>
-            </div>
-        `;
-    }
-    localStorage.removeItem('collaborationData');
-    showToast('Kollaboration geleert');
-}
-
-function approveResponse() {
-    showToast('KI-Antwort genehmigt und an Coachee gesendet');
-    console.log('✅ KI-Antwort genehmigt');
-}
-
-function modifyResponse() {
-    const newResponse = prompt('Antwort bearbeiten:');
-    if (newResponse) {
-        showToast('Geänderte Antwort gesendet');
-        console.log('🔄 Antwort geändert:', newResponse);
-    }
-}
-
-// ===== COACH-KI ASSISTANT =====
-function askCoachKI(query) {
-    const output = document.getElementById('coachKIOutput');
-    if (!output) return;
-    
-    // Loading State
-    output.innerHTML = '<div class="ai-thinking">🤖 Coach-KI denkt nach...</div>';
-    
-    setTimeout(() => {
-        const responses = {
-            'Prozess-Beratung': `📊 <strong>Prozess-Status:</strong><br>
-                • Aktuelle Phase: ${currentPhase}/4<br>
-                • Klient: ${currentClient?.name || 'Nicht ausgewählt'}<br>
-                • Empfehlung: ${getPhaseRecommendation()}`,
-            
-            'Methoden-Tipp': getRandomMethodTip(),
-            
-            'Spannungsfeld': `⚖️ <strong>Spannungsfeld-Arbeit:</strong><br>
-                • Nutzen Sie GT4 zur Identifikation<br>
-                • DelightEx Avatar-Tool für Aufstellung<br>
-                • Beide Pole würdigen, Balance finden<br>
-                💡 <a href="https://www.delightex.com" target="_blank">DelightEx öffnen</a>`
-        };
-        
-        let response = responses[query] || `🤖 <strong>Coach-KI Analyse:</strong><br>
-            Ihre Anfrage "${query}" wurde verarbeitet.<br>
-            Aktueller Kontext: ${currentClient?.name || 'Kein Klient'} - Phase ${currentPhase}<br>
-            💡 Weitere Unterstützung verfügbar über Quick Actions.`;
-        
-        output.innerHTML = `
-            <div class="ai-response">
-                <div class="response-header">
-                    <span class="ai-icon">🤖</span>
-                    <span class="response-time">${new Date().toLocaleTimeString()}</span>
+    // Nachricht in Kollaboration anzeigen
+    const messagesContainer = document.getElementById('collaborationMessages');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = `
+            <div class="message coach" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <span style="font-weight: bold;">👨‍💼 Coach</span>
+                    <span style="color: #64748b; font-size: 0.9rem;">${new Date().toLocaleTimeString()}</span>
+                    ${selectedPrompt ? `<span style="background: #dbeafe; color: #1d4ed8; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">${selectedPrompt.key}</span>` : ''}
                 </div>
-                <div class="response-content">${response}</div>
+                <div style="margin-bottom: 1rem;">${content}</div>
+                <div style="font-size: 0.9rem; color: #64748b;">Prompt wurde an den Coachee gesendet. Klicken Sie "An KI senden" für eine Antwort.</div>
             </div>
         `;
-    }, 1000);
-}
-
-function getPhaseRecommendation() {
-    const recommendations = {
-        1: 'Vertrauen aufbauen, Erstanliegen klären (GT1-GT3)',
-        2: 'Tiefere Analyse, Spannungsfelder erkunden (GT4-GT6)', 
-        3: 'Lösungen entwickeln, Ressourcen aktivieren (GT7-GT9)',
-        4: 'Umsetzung planen, Transfer sicherstellen (GT10-GT12)'
-    };
-    return recommendations[currentPhase];
-}
-
-function getRandomMethodTip() {
-    const tips = [
-        '🎭 <strong>Avatar-Aufstellung:</strong> Spannungsfelder visualisieren mit DelightEx',
-        '📊 <strong>Skalierungsfragen:</strong> Fortschritt messbar machen (SF2)',
-        '🔍 <strong>Wunderfrage:</strong> Lösungsvisionen entwickeln (SF1)',
-        '⚡ <strong>Ressourcen-Mapping:</strong> Stärken aktivieren (GT8)',
-        '🎯 <strong>Timeline-Arbeit:</strong> Zeitliche Entwicklung verstehen'
-    ];
-    return tips[Math.floor(Math.random() * tips.length)];
-}
-
-// ===== TEMPLATES =====
-function loadTemplate(templateId) {
-    const templates = {
-        'konflikt': ['GT1', 'GT3', 'GT4', 'GT5', 'GT7', 'GT9', 'GT10', 'GT11'],
-        'entscheidung': ['GT1', 'GT2', 'GT7', 'GT8', 'GT9', 'SF1', 'GT10', 'GT11'],
-        'spannungsfeld': ['GT4', 'SF1', 'DIAG1', 'LÖS1', 'META1'],
-        'ressourcen': ['GT8', 'SF2', 'SF3', 'LÖS1', 'META1']
-    };
-    
-    const templatePrompts = templates[templateId];
-    if (templatePrompts) {
-        showTab('coaching');
-        showToast(`Template "${templateId}" geladen`);
-        
-        // Highlight relevant prompts
-        setTimeout(() => {
-            document.querySelectorAll('.prompt-card').forEach(card => {
-                card.classList.remove('template-highlight');
-            });
-            
-            templatePrompts.forEach(promptId => {
-                const card = document.querySelector(`.prompt-card .prompt-id:contains("${promptId}")`);
-                if (card) {
-                    card.closest('.prompt-card').classList.add('template-highlight');
-                }
-            });
-        }, 500);
     }
+    
+    // Kollaborations-Aktionen anzeigen
+    const actions = document.getElementById('collaborationActions');
+    if (actions) {
+        actions.style.display = 'flex';
+    }
+    
+    console.log('✅ Prompt an Kollaboration gesendet');
 }
 
-// ===== FILTER FUNKTIONEN =====
-function filterPrompts() {
-    const searchTerm = document.getElementById('promptSearch').value.toLowerCase();
-    const cards = document.querySelectorAll('.prompt-card');
+// ===== AN KI SENDEN =====
+function sendToAI() {
+    const messagesContainer = document.getElementById('collaborationMessages');
+    if (!messagesContainer) return;
     
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
-    });
-}
-
-function filterPromptsByCategory(category) {
-    const cards = document.querySelectorAll('.prompt-card');
+    // Intelligente KI-Antwort basierend auf Prompt-Inhalt
+    const editor = document.getElementById('promptEditor');
+    const promptContent = editor.value.toLowerCase();
     
-    cards.forEach(card => {
-        if (category === 'all') {
-            card.style.display = 'block';
-        } else {
-            const cardCategory = card.dataset.category;
-            card.style.display = cardCategory === category ? 'block' : 'none';
-        }
-    });
-}
-
-function filterPromptsByPhase(phase) {
-    const cards = document.querySelectorAll('.prompt-card');
+    let aiResponse = generateIntelligentAIResponse(promptContent);
     
-    cards.forEach(card => {
-        const cardPhase = parseInt(card.dataset.phase);
-        card.style.display = cardPhase === phase ? 'block' : 'none';
-    });
-}
-
-// ===== UI HELPER FUNKTIONEN =====
-function showTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Remove active from buttons
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    
-    // Show target tab
-    const targetTab = document.getElementById(tabName);
-    const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
-    
-    if (targetTab) targetTab.classList.add('active');
-    if (targetButton) targetButton.classList.add('active');
-}
-
-function showToast(message) {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4CAF50;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 6px;
-        z-index: 10000;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    // KI-Antwort hinzufügen
+    messagesContainer.innerHTML += `
+        <div class="message ai" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border-left: 4px solid #8b5cf6;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <span style="font-weight: bold;">🤖 KI-Coach</span>
+                <span style="color: #64748b; font-size: 0.9rem;">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div style="line-height: 1.6;">${aiResponse}</div>
+        </div>
     `;
     
-    document.body.appendChild(toast);
+    // Weitere Aktionen anzeigen
+    const actions = document.getElementById('collaborationActions');
+    if (actions) {
+        actions.innerHTML = `
+            <button onclick="getAlternativeResponse()" style="background: #8b5cf6; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer;">🔄 Andere Coach-Formulierung</button>
+            <button onclick="editPrompt()" style="background: #64748b; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer;">✏️ Prompt bearbeiten</button>
+            <button onclick="nextPrompt()" style="background: #10b981; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer;">➡️ Nächster Prompt</button>
+        `;
+    }
     
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
+    console.log('✅ KI-Antwort generiert');
 }
 
-// ===== UTILITY FUNKTIONEN =====
-function exportSession() {
-    const sessionData = {
-        client: currentClient,
-        phase: currentPhase,
-        timestamp: new Date().toISOString(),
-        collaborationData: localStorage.getItem('collaborationData')
-    };
+// ===== INTELLIGENTE KI-ANTWORTEN =====
+function generateIntelligentAIResponse(promptContent) {
+    // Erweiterte Themen-Erkennung basierend auf Prompt-Kategorien
+    if (promptContent.includes('gt1') || promptContent.includes('erstanliegen')) {
+        return `Vielen Dank für das Vertrauen, dass Sie dieses wichtige Anliegen mit mir teilen. Was Sie beschreiben, zeigt bereits eine wichtige Reflexionsfähigkeit. Ihre Bereitschaft, sich strukturiert mit dieser Herausforderung auseinanderzusetzen, ist ein wertvoller erster Schritt. Lassen Sie uns gemeinsam die verschiedenen Aspekte Ihres Anliegens durchdenken und dabei sowohl die emotionalen als auch die praktischen Dimensionen berücksichtigen.`;
+    }
     
-    const dataStr = JSON.stringify(sessionData, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    if (promptContent.includes('solution finder') || promptContent.includes('sf1')) {
+        return `Was ich zwischen den Zeilen höre, ist eine Person, die bereit ist für Veränderung und gleichzeitig noch nach dem besten Weg sucht. Ihre Art, das Thema zu beschreiben, zeigt mir sowohl Ihre Reflektionsfähigkeit als auch Ihren Wunsch nach konstruktiven Lösungen. Besonders bemerkenswert finde ich [spezifischer Aspekt]. Das deutet auf wichtige Ressourcen hin, die wir für Ihren Weg nutzen können.`;
+    }
     
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
-    link.download = `coaching-session-${currentClient?.name || 'unknown'}-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
+    if (promptContent.includes('diag') || promptContent.includes('spannungsfeld')) {
+        return `In Ihrer Beschreibung erkenne ich ein klassisches Spannungsfeld zwischen [Pol A] und [Pol B]. Diese Art von innerer Reibung ist sehr normal und oft ein Zeichen dafür, dass wichtige Entwicklungsschritte anstehen. Solche Spannungen entstehen meist dann, wenn verschiedene Lebensbereiche oder Werte miteinander konkurrieren. Das ist nicht problematisch, sondern zeigt Ihre Differenziertheit.`;
+    }
     
-    showToast('Session exportiert');
+    if (promptContent.includes('lös') || promptContent.includes('vision') || promptContent.includes('imagination')) {
+        return `Lassen Sie uns gemeinsam ein kraftvolles Bild Ihrer Zukunft entwickeln. Wenn Sie Ihr Ziel erreicht haben, stelle ich mir vor, dass Sie eine neue Art von Gelassenheit und Selbstvertrauen ausstrahlen. Sie haben Ihre Herausforderung nicht nur gemeistert, sondern sind daran gewachsen. Diese Vision soll Sie motivieren und Ihnen als innerer Kompass dienen.`;
+    }
+    
+    if (promptContent.includes('meta') || promptContent.includes('prozess')) {
+        return `An diesem Punkt im Coaching-Prozess ist es wichtig, kurz innezuhalten und zu reflektieren. Was ist bisher hilfreich für Sie gewesen? Wo spüren Sie bereits Bewegung oder neue Klarheit? Diese Zwischenbilanz hilft uns, den weiteren Weg optimal zu gestalten und sicherzustellen, dass wir auf dem richtigen Pfad sind.`;
+    }
+    
+    if (promptContent.includes('ruhestand') || promptContent.includes('übergang')) {
+        return `Übergangsphasen wie der Ruhestand bringen oft gemischte Gefühle mit sich - das ist völlig normal. Einerseits die Vorfreude auf neue Freiheiten, andererseits Unsicherheit über die Gestaltung dieser neuen Lebensphase. Ihre Sorgen sind berechtigt und gleichzeitig ein Zeichen dafür, dass Sie diesen Übergang bewusst angehen möchten. Das ist eine wichtige Ressource.`;
+    }
+    
+    // Standard-Antwort für unbekannte Prompts
+    return `Vielen Dank für das Vertrauen, dass Sie Ihr Anliegen mit mir teilen. Was Sie beschreiben, zeigt wichtige Reflexions- und Entwicklungsbereitschaft. Ihre Offenheit für diesen Coaching-Prozess ist bereits eine wertvolle Ressource. Lassen Sie uns gemeinsam strukturiert an Ihrem Thema arbeiten und dabei sowohl Ihre Stärken als auch die Herausforderungen im Blick behalten.`;
 }
 
-function openAvatarTool() {
-    window.open('https://www.delightex.com', '_blank');
-    showToast('DelightEx Avatar Tool geöffnet');
-}
-
-// ===== DEBUG FUNKTIONEN =====
-function validateData() {
-    console.log('🔍 Daten-Validierung:');
-    console.log('Prompts:', Object.keys(prompts).length);
-    console.log('Current Client:', currentClient?.name || 'Nicht ausgewählt');
-    console.log('Current Phase:', currentPhase);
-    console.log('Session Active:', !!sessionStartTime);
-}
-
-function debugCollaborationSync() {
-    const stored = localStorage.getItem('collaborationData');
-    console.log('🔧 Kollaboration Debug:');
-    console.log('localStorage:', stored ? 'Daten verfügbar' : 'Leer');
-    console.log('Thread Element:', !!document.getElementById('collaborationThread'));
-    if (stored) {
-        console.log('Stored Data:', JSON.parse(stored));
+// ===== ZUSÄTZLICHE FUNKTIONEN =====
+function getAlternativeResponse() {
+    const messagesContainer = document.getElementById('collaborationMessages');
+    const aiMessages = messagesContainer.querySelectorAll('.message.ai');
+    const lastAIMessage = aiMessages[aiMessages.length - 1];
+    
+    if (lastAIMessage) {
+        const alternatives = [
+            "Das ist ein sehr wichtiges Thema, das Sie da ansprechen. Ihre Reflexion zeigt mir, dass Sie bereits wichtige Schritte in Richtung Lösung gehen. Lassen Sie uns gemeinsam herausfinden, welche Ressourcen und Möglichkeiten Sie bereits haben.",
+            "Ich kann gut verstehen, dass Sie sich Gedanken dazu machen. Diese Art von Herausforderung erfordert eine durchdachte Herangehensweise. Ihre Offenheit, darüber zu sprechen, ist bereits ein wichtiger Baustein für eine Lösung.",
+            "Vielen Dank für diese ehrliche Einschätzung. Was Sie beschreiben, kenne ich aus vielen Coaching-Gesprächen. Menschen in Ihrer Situation entwickeln oft sehr kreative und erfolgreiche Strategien."
+        ];
+        
+        const randomResponse = alternatives[Math.floor(Math.random() * alternatives.length)];
+        const contentDiv = lastAIMessage.querySelector('div:last-child');
+        if (contentDiv) {
+            contentDiv.innerHTML = randomResponse;
+        }
     }
 }
 
-// ===== APP START =====
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 DOM geladen, starte App...');
-    initializeApp();
-});
+function editPrompt() {
+    switchToTab('coaching');
+}
+
+function nextPrompt() {
+    // Intelligente Prompt-Empfehlung basierend auf aktuellem Prompt
+    if (!selectedPrompt) {
+        usePrompt('GT1');
+        return;
+    }
+    
+    const currentKey = selectedPrompt.key;
+    const currentCategory = selectedPrompt.category;
+    
+    // GT-Sequenz
+    if (currentCategory === 'GT') {
+        const currentNumber = parseInt(currentKey.replace('GT', ''));
+        const nextNumber = currentNumber + 1;
+        const nextKey = `GT${nextNumber}`;
+        
+        if (window.prompts[nextKey]) {
+            usePrompt(nextKey);
+            switchToTab('coaching');
+            return;
+        }
+    }
+    
+    // SF-Sequenz
+    if (currentCategory === 'SF') {
+        const sfSequence = ['SF1', 'ZIEL', 'SKALA', 'TEAM', 'DIALOG', 'NAMEN', 'VAL', 'TRANSFORM', 'STÄRKEN', 'INTEGRATION', 'PLAN', 'VISION'];
+        const currentIndex = sfSequence.indexOf(currentKey);
+        const nextIndex = currentIndex + 1;
+        
+        if (nextIndex < sfSequence.length && window.prompts[sfSequence[nextIndex]]) {
+            usePrompt(sfSequence[nextIndex]);
+            switchToTab('coaching');
+            return;
+        }
+    }
+    
+    // Fallback zu GT1
+    usePrompt('GT1');
+    switchToTab('coaching');
+}
+
+// ===== TEMPLATE-RENDERING (ENTFERNT - Prompts sind im Coaching-Tab) =====
+// Templates wurden entfernt, da das komplette Prompt Repository 
+// direkt im Coaching-Tab verfügbar ist - viel effizienter!
+
+// ===== DEBUG-PANEL =====
+function updateDebugPanel() {
+    const statusEl = document.getElementById('debugStatus');
+    const clientEl = document.getElementById('debugClient');
+    const sessionEl = document.getElementById('debugSession');
+    const phaseEl = document.getElementById('debugPhase');
+    
+    if (statusEl) statusEl.textContent = sessionActive ? 'Session aktiv' : 'Bereit';
+    if (clientEl) clientEl.textContent = currentClient ? currentClient.name : 'Nicht ausgewählt';
+    if (sessionEl) sessionEl.textContent = sessionActive ? 'Aktiv' : 'Inaktiv';
+    if (phaseEl) phaseEl.textContent = currentSession ? `Phase ${currentSession.phase}` : '-';
+}
+
+// ===== DEBUG-FUNKTIONEN (für Console) =====
+function debugApp() {
+    console.log('🔧 Debug-Informationen:');
+    console.log('- Aktueller Klient:', currentClient);
+    console.log('- Session aktiv:', sessionActive);
+    console.log('- Ausgewählter Prompt:', selectedPrompt);
+    console.log('- Verfügbare Prompts:', Object.keys(window.prompts || {}));
+    console.log('- Verfügbare Klienten:', window.clients?.length || 0);
+    console.log('- Prompt-Statistiken:', getPromptStatistics());
+}
+
+function debugPrompts() {
+    console.log('📝 Prompt-Debug:');
+    const stats = getPromptStatistics();
+    console.log('- Anzahl Prompts:', stats.total);
+    console.log('- Nach Kategorie:', stats.byCategory);
+    console.log('- Nach Phase:', stats.byPhase);
+    console.log('- Container vorhanden:', !!document.getElementById('promptsContainer'));
+}
+
+function forcePromptLoad() {
+    console.log('⚡ Force-Loading Prompts...');
+    renderPrompts();
+    populateCategoryFilter();
+    showNotification('🔄 Prompts neu geladen!', 'info');
+}
+
+function testCollab() {
+    console.log('🤝 Test Kollaboration...');
+    switchToTab('collaboration');
+    sendToCollaboration();
+}
+
+// Globale Funktionen für HTML-Buttons
+window.usePrompt = usePrompt;
+window.showPromptDetails = showPromptDetails;
+window.getAlternativeResponse = getAlternativeResponse;
+window.editPrompt = editPrompt;
+window.nextPrompt = nextPrompt;
+window.debugApp = debugApp;
+window.debugPrompts = debugPrompts;
+window.forcePromptLoad = forcePromptLoad;
+window.testCollab = testCollab;
+
+console.log('🎯 Coach Mission Control vollständig geladen mit 85+ Prompts!');
