@@ -1,3 +1,6 @@
+// KORREKTE data.js - Echte Geißler Triadische GT1-GT12 Prompts
+// Wissenschaftlich fundierte 12-Schritte Methode nach Harald Geißler
+
 // Klienten-Daten
 const clients = [
     {
@@ -46,237 +49,275 @@ const clients = [
     }
 ];
 
-// Echte GT1-GT12 Prompts aus der bereitgestellten Dokumentation
+// ECHTE GEISSLER TRIADISCHE GT1-GT12 PROMPTS
+// Wissenschaftlich fundierte 12-Schritte Methode nach Harald Geißler
 const prompts = {
-    // GT-Prompts (Geißler Triadisch 1-12)
+    // === PHASE 1: PROBLEM & ZIELBESCHREIBUNG (Schritte 1-4) ===
+    
     GT1: {
-        text: "Was ist das, was Sie beschäftigt?",
+        text: "Ich habe folgendes Anliegen: [PROBLEMBESCHREIBUNG]. Kannst du mir helfen, das strukturiert zu durchdenken?",
         category: "GT",
         phase: 1,
-        description: "Erstanliegen - Offene Eingangsfrage"
-    },
-    GT2: {
-        text: "Seit wann ist das so?",
-        category: "GT", 
-        phase: 1,
-        description: "Zeitrahmen erfassen"
-    },
-    GT3: {
-        text: "Wobei würde es Sie unterstützen, wenn sich etwas verändert?",
-        category: "GT",
-        phase: 1, 
-        description: "Veränderungsmotivation"
-    },
-    GT4: {
-        text: "Was ist einerseits, was ist andererseits?",
-        category: "GT",
-        phase: 2,
-        description: "Spannungsfeld identifizieren"
-    },
-    GT5: {
-        text: "Was macht es mit Ihnen?",
-        category: "GT",
-        phase: 2,
-        description: "Emotionale Auswirkung"
-    },
-    GT6: {
-        text: "Welche Bedeutung hat das für Sie?",
-        category: "GT", 
-        phase: 2,
-        description: "Bedeutungsebene"
-    },
-    GT7: {
-        text: "Wie würden Sie das gerne haben?",
-        category: "GT",
-        phase: 3,
-        description: "Zielvorstellung"
-    },
-    GT8: {
-        text: "Was bräuchten Sie dafür?",
-        category: "GT",
-        phase: 3,
-        description: "Ressourcen identifizieren"
-    },
-    GT9: {
-        text: "Wovon würden Sie sich trennen?",
-        category: "GT",
-        phase: 3,
-        description: "Loslassen-Aspekt"
-    },
-    GT10: {
-        text: "Was würden Sie beibehalten?",
-        category: "GT",
-        phase: 3,
-        description: "Bewahren-Aspekt"
-    },
-    GT11: {
-        text: "Was wäre ein erster Schritt?",
-        category: "GT",
-        phase: 4,
-        description: "Handlungsplanung"
-    },
-    GT12: {
-        text: "Wobei könnte ich Sie unterstützen?",
-        category: "GT",
-        phase: 4,
-        description: "Support-Angebot"
+        description: "GT1 - ERSTANLIEGEN: Initiale Problembeschreibung mit KI-Unterstützung",
+        methodInfo: "Schritt 1: Einleitung und erste Problem-/Zielbeschreibung"
     },
     
-    // Solution Finder Prompts
+    GT2: {
+        text: "Hier noch zusätzliche Informationen zu meinem Anliegen: [ERGÄNZUNGEN]. Bitte fasse meine Situation strukturiert zusammen und gliedere in: - Ist-Situation (was ist jetzt) - Soll-Situation (was soll werden) - Erste Hypothesen zu möglichen Ursachen",
+        category: "GT",
+        phase: 1,
+        description: "GT2 - ZUSATZINFORMATIONEN: Erweiterte Problem- und Zielbeschreibung",
+        methodInfo: "Schritt 2: Strukturierte Zusammenfassung in Ist- und Soll-Zustand"
+    },
+    
+    GT3: {
+        text: "Ich habe folgendes Bild gewählt: [BILDBESCHREIBUNG]. Was sagt dieses Bild über mein Coaching-Ziel aus? Welche unbewussten Aspekte meines Anliegens könnte es widerspiegeln?",
+        category: "GT",
+        phase: 1,
+        description: "GT3 - SYMBOLBILD-ANALYSE: Immersive Bildarbeit zur Zielklärung",
+        methodInfo: "Schritt 3: Bildgestützte Methode für emotionale Tiefe"
+    },
+    
+    GT4: {
+        text: "Bitte analysiere mein Anliegen und identifiziere mit Hilfe des Textbausteins „ausbalancierungsprobleme" dasjenige Ausbalancierungsproblem, das am besten zu meiner Situation passt. Erkläre, warum diese Spannungspole für mich relevant sind.",
+        category: "GT",
+        phase: 1,
+        description: "GT4 - AUSBALANCIERUNGSPROBLEME: Identifikation von Spannungsfeldern",
+        methodInfo: "Schritt 4: Überprüfung auf fehlende Informationen und Kernkonflikt"
+    },
+    
+    // === PHASE 2: PROBLEMANALYSE (Schritte 5-7) ===
+    
+    GT5: {
+        text: "Hier ist meine Schlüsselsituation: [DETAILLIERTE BESCHREIBUNG]. In diesem Moment fühlte ich: [AFFEKT/EMOTION]. Bitte analysiere diese Situation und hilf mir zu verstehen, was da passiert ist.",
+        category: "GT",
+        phase: 2,
+        description: "GT5 - SCHLÜSSELSITUATION: Identifikation von Auslösesituation und Kernaffekt",
+        methodInfo: "Schritt 5: Schlüsselsituation und Schlüsselaffekt bestimmen"
+    },
+    
+    GT6: {
+        text: "Versetze dich bitte in die Perspektive der „Bremse/des Widerstands", die in meinem obigen Transkript erwähnt wird. Welche weiteren Argumente könnte diese innere Stimme vorbringen? Was könnte ihre positive Absicht sein?",
+        category: "GT",
+        phase: 2,
+        description: "GT6 - AVATAR-PERSPEKTIVE: Tiefenpsychologisches Interview mit innerem Team",
+        methodInfo: "Schritt 6: Avatar-Aufstellung und Interview mit Persönlichkeitsanteilen"
+    },
+    
+    GT7: {
+        text: "Analysiere das obige Transkript sowie alle momentan vorliegenden Informationen zu meiner Coaching-Problematik mit Hilfe der Kategorien von Ausbalancierungsproblemen. Welche Muster erkennst du? Welche Spannungsfelder sind zentral?",
+        category: "GT",
+        phase: 2,
+        description: "GT7 - KATEGORIEN-ANALYSE: KI-Analyse der Persönlichkeitsanteile und Ursachen",
+        methodInfo: "Schritt 7: Systematische Auswertung der Avatar-Interviews"
+    },
+    
+    // === PHASE 3: LÖSUNGSSTRATEGIE (Schritte 8-11) ===
+    
+    GT8: {
+        text: "Formuliere auf Basis der bisherigen Erkenntnisse ein übergeordnetes Lern- und Entwicklungsziel für mich. Mache es inspirierend und motivierend, aber auch konkret umsetzbar.",
+        category: "GT",
+        phase: 3,
+        description: "GT8 - LERNZIEL FORMULIEREN: Übergeordnetes Entwicklungsziel definieren",
+        methodInfo: "Schritt 8: Das Thema hinter dem Thema - nachhaltiges Lernziel"
+    },
+    
+    GT9: {
+        text: "Gehe bitte von dieser Rangpositionierung meiner inneren Anteile aus und kläre, wie die verschiedenen Probleme und Widerstände, die auftauchen könnten, zu bewältigen wären. Welche Strategien helfen bei der Umsetzung?",
+        category: "GT",
+        phase: 3,
+        description: "GT9 - WIDERSTAND-ANALYSE: Antizipation von Umsetzungswiderständen",
+        methodInfo: "Schritt 9: Innere Widerstände aufstellen und verstehen"
+    },
+    
+    GT10: {
+        text: "Analysiere dieses Transkript: Welche realitätsprägenden Überzeugungen und inneren Regeln erkennst du, die meine Umsetzung hemmen könnten? Welche alternativen, stärkenden Glaubenssätze wären hilfreich?",
+        category: "GT",
+        phase: 3,
+        description: "GT10 - GLAUBENSSÄTZE IDENTIFIZIEREN: KI-Analyse der Umsetzungswiderstände",
+        methodInfo: "Schritt 10: Tieferliegende Überzeugungen und Regeln aufdecken"
+    },
+    
+    GT11: {
+        text: "Bitte entwickle eine Erfolgsimagination in Ich-Form für mein Ziel: [ZIEL]. Nutze emotionale, sinnliche Sprache und male mir aus, wie es sich anfühlt, wenn ich mein Ziel erreicht habe. Mache es so konkret und motivierend wie möglich.",
+        category: "GT",
+        phase: 3,
+        description: "GT11 - ERFOLGSIMAGINATION: Entwicklung neuen Erlebens des Erfolgs",
+        methodInfo: "Schritt 11: Immersive Erfolgsimagination - emotionales Umtraining"
+    },
+    
+    // === PHASE 4: UMSETZUNG (Schritt 12) ===
+    
+    GT12: {
+        text: "Erstelle einen konkreten Projektplan mit spezifischen Aktivitäten für die nächsten 4-6 Wochen. Berücksichtige meine verfügbare Zeit: [ZEITANGABE] und meine Ressourcen: [RESSOURCEN]. Teile die Schritte in machbare Wochenziele auf.",
+        category: "GT",
+        phase: 4,
+        description: "GT12 - PROJEKTPLANUNG: Transfer in den Alltag mit konkretem Umsetzungsplan",
+        methodInfo: "Schritt 12: Umsetzungsunterstützung und Nachhaltigkeit"
+    },
+    
+    // === ERGÄNZENDE PROMPTS FÜR SPEZIELLE ANWENDUNGEN ===
+    
+    // Solution Finder Ergänzungen
     SF1: {
         text: "Stellen Sie sich vor, über Nacht geschieht ein Wunder und Ihr Problem ist gelöst. Was wäre morgen früh anders?",
         category: "SF",
         phase: 2,
-        description: "Wunderfrage"
+        description: "Wunderfrage - Alternative zu GT11 für lösungsfokussierte Ansätze"
     },
+    
     SF2: {
         text: "Auf einer Skala von 1-10, wo stehen Sie heute mit Ihrem Anliegen?",
-        category: "SF", 
-        phase: 2,
-        description: "Skalierungsfrage"
-    },
-    SF3: {
-        text: "Was ist bereits gut und sollte so bleiben?",
         category: "SF",
         phase: 2,
-        description: "Ressourcen-Fokus"
-    },
-    SF4: {
-        text: "Wann war es schon einmal besser? Was war damals anders?",
-        category: "SF",
-        phase: 2,
-        description: "Ausnahmen finden"
-    },
-    SF5: {
-        text: "Was würden andere bemerken, wenn Sie einen Schritt weitergekommen sind?",
-        category: "SF",
-        phase: 3,
-        description: "Externe Perspektive"
+        description: "Skalierungsfrage - Standortbestimmung und Fortschrittsmessung"
     },
     
-    // Diagnostische Prompts
-    DIAG1: {
-        text: "Wie geht es Ihnen damit?",
-        category: "DIAG",
+    // Avatar-Spezial-Prompts für DelightEx Integration
+    AVA1: {
+        text: "Ich möchte eine Avatar-Aufstellung für mein Spannungsfeld durchführen. Bitte hilf mir, die drei wichtigsten inneren Anteile zu identifizieren: Teamchefin (Ziel), Unterstützerin (Ressource) und Bremse (Widerstand).",
+        category: "AVA",
         phase: 2,
-        description: "Emotionale Befindlichkeit"
-    },
-    DIAG2: {
-        text: "Was löst das in Ihnen aus?",
-        category: "DIAG",
-        phase: 2, 
-        description: "Innere Reaktion"
-    },
-    DIAG3: {
-        text: "Welche Gedanken gehen Ihnen durch den Kopf?",
-        category: "DIAG",
-        phase: 2,
-        description: "Gedankenmuster"
-    },
-    DIAG4: {
-        text: "Was spüren Sie körperlich dabei?",
-        category: "DIAG",
-        phase: 2,
-        description: "Körperwahrnehmung"
-    },
-    DIAG5: {
-        text: "Welche Erinnerungen kommen hoch?",
-        category: "DIAG",
-        phase: 2,
-        description: "Assoziationen"
+        description: "Avatar-Setup für DelightEx - Vorbereitung der Aufstellung"
     },
     
-    // Lösungsorientierte Prompts  
-    LÖS1: {
-        text: "Was wäre, wenn das Problem nicht mehr da wäre?",
-        category: "LÖS",
-        phase: 3,
-        description: "Lösungsvision"
-    },
-    LÖS2: {
-        text: "Welche Fähigkeiten haben Sie, die hilfreich sein könnten?",
-        category: "LÖS", 
-        phase: 3,
-        description: "Ressourcen aktivieren"
-    },
-    LÖS3: {
-        text: "Was würde X (wichtige Person) Ihnen raten?",
-        category: "LÖS",
-        phase: 3,
-        description: "Perspektivwechsel"
-    },
-    LÖS4: {
-        text: "Welche Unterstützung bräuchten Sie?",
-        category: "LÖS",
-        phase: 3,
-        description: "Support-Bedarf"
-    },
-    LÖS5: {
-        text: "Was wäre ein kleiner, machbarer Schritt?",
-        category: "LÖS",
-        phase: 4,
-        description: "Konkrete Handlung"
+    AVA2: {
+        text: "Basierend auf meiner Avatar-Aufstellung: Was sagt die 'Bremse' zu meinem Vorhaben? Welche Ängste und Bedenken äußert sie?",
+        category: "AVA",
+        phase: 2,
+        description: "Avatar-Interview mit dem Widerstand - Tiefenexploration"
     },
     
-    // Meta-Coaching Prompts
+    AVA3: {
+        text: "Was antwortet die 'Unterstützerin' auf die Bedenken der Bremse? Wie können beide Seiten integriert werden?",
+        category: "AVA",
+        phase: 3,
+        description: "Avatar-Integration - Vermittlung zwischen den Anteilen"
+    },
+    
+    // Meta-Coaching für Prozessreflexion
     META1: {
-        text: "Wie erleben Sie unser Gespräch?",
+        text: "Wie erleben Sie unser triadisches Coaching bisher? Was war besonders hilfreich?",
         category: "META",
         phase: 4,
-        description: "Prozess-Reflexion"
+        description: "Prozess-Reflexion - Coaching-Erfahrung bewerten"
     },
+    
     META2: {
-        text: "Was ist für Sie hilfreich gewesen?",
+        text: "Welche Erkenntnisse aus unserem Coaching nehmen Sie mit? Was hat Sie am meisten überrascht?",
         category: "META",
         phase: 4,
-        description: "Wirksamkeit bewerten"
-    },
-    META3: {
-        text: "Was nehmen Sie mit?",
-        category: "META",
-        phase: 4,
-        description: "Essenz extrahieren"
-    },
-    META4: {
-        text: "Welche Fragen sind noch offen?",
-        category: "META",
-        phase: 4,
-        description: "Offene Punkte"
-    },
-    META5: {
-        text: "Wie geht es für Sie weiter?",
-        category: "META",
-        phase: 4,
-        description: "Transfer planen"
+        description: "Lerntransfer - Essenzen und Überraschungen"
     }
 };
 
-// Coaching Templates
-const coachingTemplates = [
+// Phasen-Definitionen für strukturierten Ablauf
+const coachingPhases = [
     {
-        id: 'spannungsfeld',
-        name: 'Spannungsfeld-Analyse',
-        description: 'Systematische Bearbeitung von Spannungsfeldern mit GT4-GT12',
-        phases: ['GT4', 'GT5', 'GT6', 'GT7', 'GT8', 'GT9', 'GT10', 'GT11', 'GT12'],
-        duration: '45-60 Minuten',
-        method: 'Triadische Gesprächsführung'
+        id: 1,
+        name: "Problem & Zielbeschreibung",
+        description: "Anliegen erfassen, strukturieren und vertiefen",
+        steps: ["GT1", "GT2", "GT3", "GT4"],
+        duration: "20-30 Minuten",
+        keyOutput: "Klare Problembeschreibung mit identifiziertem Spannungsfeld"
     },
     {
-        id: 'lösungsfokus',
-        name: 'Lösungsfokussiertes Coaching',
-        description: 'Ressourcenorientierte Lösungsentwicklung',
-        phases: ['SF1', 'SF2', 'SF3', 'SF4', 'SF5', 'LÖS1', 'LÖS2', 'LÖS5'],
-        duration: '30-45 Minuten', 
-        method: 'Solution Focused Coaching'
+        id: 2,
+        name: "Problemanalyse", 
+        description: "Tiefenanalyse mit Avatar-Aufstellungen",
+        steps: ["GT5", "GT6", "GT7"],
+        duration: "25-35 Minuten",
+        keyOutput: "Verständnis der inneren Dynamik und Ursachen"
+    },
+    {
+        id: 3,
+        name: "Lösungsstrategie",
+        description: "Entwicklung nachhaltiger Veränderungsansätze",
+        steps: ["GT8", "GT9", "GT10", "GT11"],
+        duration: "30-40 Minuten", 
+        keyOutput: "Lernziel, Widerstandsanalyse und Erfolgsimagination"
+    },
+    {
+        id: 4,
+        name: "Umsetzung",
+        description: "Transfer in den Alltag",
+        steps: ["GT12"],
+        duration: "15-20 Minuten",
+        keyOutput: "Konkreter Projektplan für die nächsten 4-6 Wochen"
     }
+];
+
+// Triadische Coaching-Templates
+const coachingTemplates = [
+    {
+        id: 'vollstaendig_geissler',
+        name: 'Vollständiges Geißler Triadisches Coaching',
+        description: 'Kompletter 12-Schritte-Prozess mit allen GT1-GT12 Prompts',
+        phases: ['GT1', 'GT2', 'GT3', 'GT4', 'GT5', 'GT6', 'GT7', 'GT8', 'GT9', 'GT10', 'GT11', 'GT12'],
+        duration: '90-120 Minuten',
+        method: 'Wissenschaftlich fundierte Triadische Gesprächsführung nach Harald Geißler'
+    },
+    {
+        id: 'spannungsfeld_avatar',
+        name: 'Spannungsfeld-Coaching mit Avatar-Aufstellungen',
+        description: 'Fokus auf GT4-GT7 mit intensiver Avatar-Arbeit',
+        phases: ['GT1', 'GT4', 'GT5', 'AVA1', 'AVA2', 'GT6', 'GT7', 'AVA3', 'GT11'],
+        duration: '60-75 Minuten',
+        method: 'Triadisches Coaching mit DelightEx Avatar-Integration'
+    },
+    {
+        id: 'express_coaching',
+        name: 'Express Triadisches Coaching',
+        description: 'Kompakte Version für schnelle Problemlösung',
+        phases: ['GT1', 'GT4', 'GT5', 'GT8', 'GT11', 'GT12'],
+        duration: '45-60 Minuten',
+        method: 'Fokussierte Anwendung der Kernschritte'
+    }
+];
+
+// Ausbalancierungsprobleme (18 Dimensionen nach Geißler)
+const ausbalancierungsprobleme = [
+    { id: 1, name: 'Minderwertigkeit ↔ Großartigkeit', beschreibung: 'Selbstwert und Selbsteinschätzung' },
+    { id: 2, name: 'Anerkennungsstreben ↔ Egozentrik', beschreibung: 'Sozialer Bezug vs. Selbstzentrierung' },
+    { id: 3, name: 'Selbstinszenierung ↔ Zurückhaltung', beschreibung: 'Sichtbarkeit vs. Bescheidenheit' },
+    { id: 4, name: 'Kontrolle ↔ Vertrauen', beschreibung: 'Steuerung vs. Loslassen' },
+    { id: 5, name: 'Rationalität ↔ Intuition', beschreibung: 'Verstand vs. Bauchgefühl' },
+    { id: 6, name: 'Nähe ↔ Distanz', beschreibung: 'Beziehungsgestaltung und Abgrenzung' },
+    { id: 7, name: 'Anpassung ↔ Autonomie', beschreibung: 'Konformität vs. Eigenständigkeit' },
+    { id: 8, name: 'Leistung ↔ Entspannung', beschreibung: 'Aktivität vs. Regeneration' }
 ];
 
 // Export für Module-System
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { clients, prompts, coachingTemplates };
+    module.exports = { 
+        clients, 
+        prompts, 
+        coachingPhases,
+        coachingTemplates,
+        ausbalancierungsprobleme 
+    };
 }
 
-// Global verfügbar machen
+// SOFORTIGE GLOBAL-ZUWEISUNG
 window.clients = clients;
 window.prompts = prompts;
+window.coachingPhases = coachingPhases;
 window.coachingTemplates = coachingTemplates;
+window.ausbalancierungsprobleme = ausbalancierungsprobleme;
+
+// Debug-Ausgabe zur Bestätigung
+console.log('🎯 KORREKTE Geißler data.js geladen!');
+console.log(`✅ ${clients.length} Klienten verfügbar`);
+console.log(`✅ ${Object.keys(prompts).length} Prompts verfügbar (GT1-GT12 + Ergänzungen)`);
+console.log(`✅ ${coachingPhases.length} Coaching-Phasen definiert`);
+console.log(`✅ ${coachingTemplates.length} Templates verfügbar`);
+console.log('📋 Wissenschaftlich fundierte GT1-GT12 Prompts nach Harald Geißler geladen');
+
+// Trigger für app.js
+if (typeof window !== 'undefined') {
+    setTimeout(() => {
+        const event = new Event('dataLoaded');
+        window.dispatchEvent(event);
+        console.log('📡 dataLoaded Event dispatched - Geißler Prompts bereit');
+    }, 100);
+}
