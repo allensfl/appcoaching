@@ -8,207 +8,287 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🎯 Coach Mission Control</h1>
+                <div class="session-info">
+                    <span id="currentClientDisplay">Kein Klient ausgewählt</span>
+                    <span id="sessionTimer">00:00</span>
+                </div>
+            </div>
+        </header>
+
         <!-- Navigation -->
         <nav class="main-nav">
-            <div class="nav-brand">
-                <h1>🎯 Coach Mission Control</h1>
-                <p class="tagline">Triadisches Coaching: Coach + Klient + KI</p>
-            </div>
-            <ul class="nav-links">
-                <li><button class="tab-btn active" data-tab="clients">Klienten</button></li>
-                <li><button class="tab-btn" data-tab="coaching">Coaching</button></li>
-                <li><button class="tab-btn" data-tab="collaboration">Kollaboration</button></li>
-                <li><button class="tab-btn" data-tab="templates">Templates</button></li>
-            </ul>
+            <button class="tab-button active" data-tab="clients">👥 Klienten</button>
+            <button class="tab-button" data-tab="coaching">🎯 Coaching</button>
+            <button class="tab-button" data-tab="collaboration">🤝 Kollaboration</button>
+            <button class="tab-button" data-tab="templates">📋 Templates</button>
         </nav>
 
-        <!-- Demo Notice -->
-        <div class="demo-notice">
-            <p>🚀 <strong>Triadisches KI-Coaching Framework</strong></p>
-            <div class="demo-features">
-                <span>📝 12-Phasen Coaching nach Geißler</span>
-                <span>🔍 GT/SF/DIAG/LÖS/META Prompts</span>
-                <span>🤝 Coach-Coachee-KI Kollaboration</span>
-                <span>🎭 Avatar-Aufstellungen</span>
-            </div>
-        </div>
-
-        <!-- CLIENTS TAB -->
-        <div id="clientsTab" class="tab-content active">
-            <section class="section">
-                <div class="section-header">
-                    <h2>🧑‍💼 Klienten-Auswahl</h2>
-                    <p>Wählen Sie einen Klienten und starten Sie eine triadische Coaching-Session!</p>
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- KLIENTEN TAB -->
+            <div id="clients" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Klienten auswählen</h2>
+                    <p>Wählen Sie einen Klienten für Ihre Coaching-Session aus.</p>
                 </div>
-
-                <!-- HIER IST DER RICHTIGE CONTAINER -->
-                <div id="clientsContainer" class="clients-container">
-                    <!-- Clients werden hier von app.js geladen -->
-                </div>
-
-                <!-- Session Controls -->
-                <div class="session-controls">
-                    <button id="startSessionBtn" class="btn-primary btn-large" style="display: none;">
-                        🎯 Session starten
-                    </button>
-                    <div id="sessionInfo" class="session-info">
-                        <div id="sessionStatus" class="status">Bereit</div>
-                        <div id="sessionTimer" class="session-timer">00:00:00</div>
+                
+                <div id="clientsContainer" class="clients-grid">
+                    <!-- Clients werden hier dynamisch geladen -->
+                    <div class="client-card" onclick="selectClient('sarah')">
+                        <div class="client-avatar">👩‍💼</div>
+                        <div class="client-info">
+                            <h3>Sarah Müller</h3>
+                            <p>Projektmanagerin</p>
+                            <div class="client-status status-aktiv">aktiv</div>
+                        </div>
+                    </div>
+                    
+                    <div class="client-card" onclick="selectClient('marcus')">
+                        <div class="client-avatar">👨‍💼</div>
+                        <div class="client-info">
+                            <h3>Marcus Schmidt</h3>
+                            <p>Vertriebsleiter</p>
+                            <div class="client-status status-aktiv">aktiv</div>
+                        </div>
+                    </div>
+                    
+                    <div class="client-card" onclick="selectClient('lisa')">
+                        <div class="client-avatar">👩‍💻</div>
+                        <div class="client-info">
+                            <h3>Lisa Weber</h3>
+                            <p>Marketing-Direktorin</p>
+                            <div class="client-status status-wartend">wartend</div>
+                        </div>
+                    </div>
+                    
+                    <div class="client-card" onclick="selectClient('werner')">
+                        <div class="client-avatar">👨‍🔧</div>
+                        <div class="client-info">
+                            <h3>Werner Hoffmann</h3>
+                            <p>IT-Leiter</p>
+                            <div class="client-status status-aktiv">aktiv</div>
+                        </div>
                     </div>
                 </div>
-            </section>
-        </div>
 
-        <!-- COACHING TAB -->
-        <div id="coachingTab" class="tab-content">
-            <section class="section">
-                <div class="coaching-container">
-                    <!-- COACH CONTROL PANEL -->
-                    <div class="coach-panel">
+                <div class="action-buttons">
+                    <button id="startSessionBtn" class="btn primary" onclick="startSession()" disabled>
+                        🎯 Session starten
+                    </button>
+                </div>
+            </div>
+
+            <!-- COACHING TAB -->
+            <div id="coaching" class="tab-content">
+                <div class="coaching-workspace">
+                    
+                    <!-- Coach Control Panel -->
+                    <div class="coach-control-panel">
                         <div class="panel-header">
-                            <h2>🎯 Coach Control Panel</h2>
-                            <p>Nur für Coach sichtbar</p>
+                            <h3>🎯 Coach Control Panel</h3>
+                            <div class="current-client-info">
+                                <span id="coachingClientDisplay">Kein Klient</span>
+                            </div>
                         </div>
 
-                        <!-- 12-PHASEN NAVIGATION -->
+                        <!-- 12-Phasen Navigation -->
                         <div class="phases-section">
-                            <h3>📋 12-Phasen Coaching</h3>
-                            <div id="phasesContainer" class="phases-container">
-                                <!-- Phasen werden dynamisch geladen -->
+                            <h4>12-Schritte Navigation</h4>
+                            <div id="phasesContainer" class="phases-grid">
+                                <div class="phase-card active" onclick="setPhase(1)" data-phase="1">
+                                    <div class="phase-number blue">1</div>
+                                    <div class="phase-info">
+                                        <h5>Phase 1: Erstanliegen</h5>
+                                        <p>GT1-GT3</p>
+                                    </div>
+                                </div>
+                                <div class="phase-card" onclick="setPhase(2)" data-phase="2">
+                                    <div class="phase-number orange">2</div>
+                                    <div class="phase-info">
+                                        <h5>Phase 2: Analyse</h5>
+                                        <p>GT4-GT6</p>
+                                    </div>
+                                </div>
+                                <div class="phase-card" onclick="setPhase(3)" data-phase="3">
+                                    <div class="phase-number green">3</div>
+                                    <div class="phase-info">
+                                        <h5>Phase 3: Lösungen</h5>
+                                        <p>GT7-GT9</p>
+                                    </div>
+                                </div>
+                                <div class="phase-card" onclick="setPhase(4)" data-phase="4">
+                                    <div class="phase-number purple">4</div>
+                                    <div class="phase-info">
+                                        <h5>Phase 4: Umsetzung</h5>
+                                        <p>GT10-GT12</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- PROMPT REPOSITORY -->
-                        <div class="prompt-repository">
-                            <h3>🔍 Prompt Repository</h3>
-                            
-                            <input type="text" id="promptSearch" class="prompt-search" placeholder="Suche: GT1, Spannungsfeld, Avatar...">
-                            
-                            <div class="prompt-categories">
-                                <button class="category-btn active" data-category="all">Alle</button>
-                                <button class="category-btn" data-category="GT">GT</button>
-                                <button class="category-btn" data-category="SF">SF</button>
-                                <button class="category-btn" data-category="DIAG">DIAG</button>
-                                <button class="category-btn" data-category="LÖS">LÖS</button>
-                                <button class="category-btn" data-category="META">META</button>
+                        <!-- Prompt Repository -->
+                        <div class="prompts-section">
+                            <div class="prompts-header">
+                                <h4>Prompt Repository</h4>
+                                <input type="text" id="promptSearch" placeholder="🔍 Prompts durchsuchen..." class="search-input">
                             </div>
                             
-                            <div id="promptsContainer" class="prompts-container">
+                            <div class="category-filters">
+                                <button class="category-filter active" data-category="all">Alle</button>
+                                <button class="category-filter" data-category="GT">GT</button>
+                                <button class="category-filter" data-category="SF">SF</button>
+                                <button class="category-filter" data-category="DIAG">DIAG</button>
+                                <button class="category-filter" data-category="LÖS">LÖS</button>
+                                <button class="category-filter" data-category="META">META</button>
+                            </div>
+
+                            <div id="promptsContainer" class="prompts-grid">
                                 <!-- Prompts werden hier dynamisch geladen -->
                             </div>
                         </div>
-
-                        <!-- COACH KI ASSISTANT -->
-                        <div class="coach-ai-section">
-                            <h3>🤖 Coach-KI Assistant</h3>
-                            <p class="ai-description">Private KI-Beratung (nur für Coach)</p>
-                            
-                            <div id="coachMessages" class="coach-messages">
-                                <div class="ai-welcome">
-                                    💡 Fragen Sie mich zu Prozess, Tools, Methoden, Spannungsfeldern...
-                                </div>
-                            </div>
-                            
-                            <div class="ai-input-section">
-                                <textarea id="coachInput" placeholder="Frage an KI-Assistant..." rows="2"></textarea>
-                                <button class="btn-secondary">💬 Fragen</button>
-                            </div>
-                            
-                            <div class="quick-actions">
-                                <button class="quick-action" data-query="Wie ist der aktuelle Prozess?">📊 Prozess</button>
-                                <button class="quick-action" data-query="Welche Methoden empfiehlst du?">🛠️ Methoden</button>
-                                <button class="quick-action" data-query="Analyse das Spannungsfeld">⚖️ Spannungsfeld</button>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- PROMPT EDITOR -->
-                    <div class="prompt-editor-section">
+                    <!-- Prompt Editor -->
+                    <div class="prompt-editor">
                         <div class="editor-header">
                             <h3>✏️ Prompt Editor</h3>
-                            <div class="current-phase" id="currentPhaseDisplay">Phase 1: Erstanliegen</div>
-                        </div>
-                        
-                        <textarea id="promptEditor" class="prompt-editor" placeholder="Erstellen Sie Ihren Coaching-Prompt hier..."></textarea>
-                        
-                        <div class="editor-actions">
-                            <button id="sendToCollaborationBtn" class="btn-primary btn-large">
-                                📤 An Coachee senden
-                            </button>
-                            <button onclick="openAvatarTool()" class="btn-avatar">
-                                🎭 Avatar Tool (DelightEx)
-                            </button>
-                            <button id="exportPromptBtn" class="btn-secondary">
-                                📄 Exportieren
-                            </button>
+                            <span id="phaseStatus">Phase 1: Erstanliegen</span>
                         </div>
 
-                        <div class="shortcuts-info">
-                            <small>⌨️ Shortcuts: Ctrl+1-9 für GT1-GT9 | Ctrl+Enter für Senden</small>
+                        <div class="editor-content">
+                            <textarea id="promptTextarea" placeholder="Wählen Sie einen Prompt aus dem Repository oder schreiben Sie einen eigenen..."></textarea>
+                            
+                            <div class="editor-actions">
+                                <button onclick="copyPromptText()" class="btn secondary">📋 Kopieren</button>
+                                <button onclick="clearEditor()" class="btn secondary">🗑️ Löschen</button>
+                                <button onclick="sendToCollaboration()" class="btn primary">📤 An Kollaboration senden</button>
+                            </div>
+                        </div>
+
+                        <div class="editor-info">
+                            <p>💡 <strong>Tipp:</strong> Verwenden Sie Ctrl+1-9 für GT1-GT9 Shortcuts</p>
+                            <p>🎭 Für Spannungsfelder: <a href="https://www.delightex.com" target="_blank">DelightEx Avatar Tool</a></p>
+                        </div>
+                    </div>
+
+                    <!-- Coach-KI Assistant -->
+                    <div class="coach-ai-assistant">
+                        <div class="assistant-header">
+                            <h3>🤖 Coach-KI Assistant</h3>
+                            <p>Private Beratung für Sie als Coach</p>
+                        </div>
+
+                        <div class="assistant-content">
+                            <div id="coachKIOutput" class="ai-output">
+                                <div class="welcome-message">
+                                    <p>👋 Hallo! Ich bin Ihr KI-Assistant für den Coaching-Prozess.</p>
+                                    <p>Fragen Sie mich nach Prozess-Beratung, Methoden-Tipps oder Klient-Analysen.</p>
+                                </div>
+                            </div>
+
+                            <div class="assistant-input">
+                                <textarea id="coachKIInput" placeholder="Fragen Sie mich alles zum Coaching-Prozess..."></textarea>
+                                <div class="quick-actions">
+                                    <button class="quick-action" data-action="Prozess-Beratung">📊 Prozess</button>
+                                    <button class="quick-action" data-action="Methoden-Tipp">🛠️ Methoden</button>
+                                    <button class="quick-action" data-action="Spannungsfeld">⚖️ Spannungsfeld</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
 
-        <!-- KOLLABORATION TAB -->
-        <div id="collaborationTab" class="tab-content">
-            <section class="section">
-                <div class="section-header">
-                    <h2>🤝 Kollaborations-Interface</h2>
-                    <p>Hier sehen Coach und Coachee die freigegebenen Prompts und KI-Antworten</p>
+            <!-- KOLLABORATION TAB -->
+            <div id="collaboration" class="tab-content">
+                <div class="collaboration-header">
+                    <h2>🤝 Kollaboration</h2>
                     <div class="collaboration-info">
-                        <span class="info-tag">👨‍💼 Coach sichtbar</span>
-                        <span class="info-tag">👤 Coachee sichtbar</span>
-                        <span class="info-tag">🔗 Link-sharing möglich</span>
+                        <span class="info-tag coach">👨‍💼 Coach sichtbar</span>
+                        <span class="info-tag coachee">👤 Coachee sichtbar</span>
                     </div>
                 </div>
 
-                <div id="collaborationInterface" class="collaboration-interface">
-                    <div id="collaborationMessages" class="collaboration-messages">
-                        <div class="collaboration-empty">
-                            <h3>⏳ Warten auf Coaching-Prompt...</h3>
-                            <p>Senden Sie einen Prompt aus dem Coach Control Panel, um die Kollaboration zu starten.</p>
+                <div class="collaboration-content">
+                    <div id="collaborationThread" class="message-thread">
+                        <div class="initial-message">
+                            <p>⏳ Warten auf Coaching-Prompt...</p>
+                            <p>Sobald Sie einen Prompt aus dem Coaching-Bereich senden, erscheint er hier für den Coachee.</p>
                         </div>
                     </div>
-                </div>
-            </section>
-        </div>
 
-        <!-- TEMPLATES TAB -->
-        <div id="templatesTab" class="tab-content">
-            <section class="section">
-                <div class="section-header">
-                    <h2>📚 Template-Bibliothek</h2>
-                    <p>Professionelle Coaching-Templates basierend auf wissenschaftlichen Standards</p>
+                    <div class="collaboration-controls">
+                        <button onclick="clearCollaboration()" class="btn secondary">🗑️ Thread löschen</button>
+                        <button onclick="exportSession()" class="btn secondary">📤 Session exportieren</button>
+                        <button onclick="openAvatarTool()" class="btn primary">🎭 Avatar Tool (DelightEx)</button>
+                    </div>
                 </div>
+            </div>
 
-                <div class="template-search-section">
-                    <input type="text" id="templateSearch" placeholder="Templates durchsuchen...">
-                    <select id="categoryFilter">
-                        <option value="">Alle Kategorien</option>
-                        <option value="GT">GT-Prompts</option>
-                        <option value="SF">Solution Finder</option>
-                        <option value="DIAG">Diagnostik</option>
-                        <option value="LÖS">Lösungsorientiert</option>
-                        <option value="META">Meta-Coaching</option>
-                    </select>
+            <!-- TEMPLATES TAB -->
+            <div id="templates" class="tab-content">
+                <div class="tab-header">
+                    <h2>📋 Template Repository</h2>
+                    <p>Vorgefertigte Coaching-Templates und Methoden</p>
                 </div>
 
-                <div id="templateContainer" class="template-container">
-                    <!-- Templates werden dynamisch geladen -->
+                <div class="templates-grid">
+                    <div class="template-card">
+                        <h3>🔥 Konfliktklärung</h3>
+                        <p>Systematische Bearbeitung von Konfliktsituationen</p>
+                        <div class="template-prompts">GT1, GT3, GT4, GT5, GT7, GT9, GT10, GT11</div>
+                        <button onclick="loadTemplate('konflikt')" class="btn primary">Template laden</button>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🎯 Entscheidungsfindung</h3>
+                        <p>Strukturierte Entscheidungsprozesse</p>
+                        <div class="template-prompts">GT1, GT2, GT7, GT8, GT9, SF1, GT10, GT11</div>
+                        <button onclick="loadTemplate('entscheidung')" class="btn primary">Template laden</button>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>⚖️ Spannungsfeld-Arbeit</h3>
+                        <p>Arbeit mit Polaritäten und Dilemmata</p>
+                        <div class="template-prompts">GT4, SF1, DIAG1, LÖS1, META1</div>
+                        <button onclick="loadTemplate('spannungsfeld')" class="btn primary">Template laden</button>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🚀 Ressourcen-Aktivierung</h3>
+                        <p>Stärken und Potentiale mobilisieren</p>
+                        <div class="template-prompts">GT8, SF2, SF3, LÖS2, META2</div>
+                        <button onclick="loadTemplate('ressourcen')" class="btn primary">Template laden</button>
+                    </div>
                 </div>
-            </section>
+            </div>
+
+        </main>
+
+        <!-- Debug Panel (nur in Development) -->
+        <div id="debugPanel" class="debug-panel" style="display: none;">
+            <h4>🔧 Debug Panel</h4>
+            <div class="debug-info">
+                <p>Current Client: <span id="debugClient">None</span></p>
+                <p>Current Phase: <span id="debugPhase">1</span></p>
+                <p>Session Active: <span id="debugSession">No</span></p>
+                <p>Prompts Loaded: <span id="debugPrompts">0</span></p>
+            </div>
+            <div class="debug-actions">
+                <button onclick="validateData()">🔍 Validate Data</button>
+                <button onclick="debugCollaborationSync()">🤝 Debug Collaboration</button>
+                <button onclick="console.clear()">🗑️ Clear Console</button>
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="data.js"></script>
     <script src="app.js"></script>
-
-    <!-- Debug Info -->
-    <div id="debugPanel" class="debug-panel">
-        <div id="debugInfo">App lädt...</div>
-    </div>
 </body>
 </html>
