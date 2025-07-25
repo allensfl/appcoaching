@@ -1,9 +1,9 @@
-// KI-Coaching App - Vollständige Daten
+// KI-Coaching App - Korrekte Daten mit echten Klienten
 // Datum: 25. Juli 2025
-// Fix: clients als Array definiert (behebt clients.find Error)
+// Fix: Vollständige Klienten-Array definiert
 
-// Client-Datenbank (KRITISCH: Als Array definiert!)
-const clients = [
+// KRITISCH: Client-Datenbank (muss als Array definiert sein!)
+window.clients = [
     {
         id: 'sarah',
         name: 'Sarah Müller',
@@ -46,8 +46,11 @@ const clients = [
     }
 ];
 
+// Für Kompatibilität auch als const definieren
+const clients = window.clients;
+
 // Coaching-Templates Bibliothek
-const coachingTemplates = [
+window.coachingTemplates = [
     {
         id: 'goal-setting',
         title: 'SMART Ziele setzen',
@@ -337,8 +340,11 @@ Erzählen Sie mir von der Entscheidung, die Sie gerade beschäftigt.`
     }
 ];
 
+// Für Kompatibilität auch als const definieren
+const coachingTemplates = window.coachingTemplates;
+
 // Coaching-Kategorien für Filterung
-const coachingCategories = [
+window.coachingCategories = [
     'Zielsetzung',
     'Problemlösung',
     'Selbstreflexion',
@@ -351,30 +357,10 @@ const coachingCategories = [
     'Motivation'
 ];
 
-// Demo-Session-Daten
-const demoSessions = [
-    {
-        id: 'session-001',
-        clientId: 'sarah',
-        date: '2025-07-20',
-        duration: 45,
-        topic: 'Zeitmanagement-Strategien',
-        notes: 'Fokus auf Prioritätensetzung und Delegation',
-        outcome: 'Konkrete Maßnahmen für die nächsten 2 Wochen definiert'
-    },
-    {
-        id: 'session-002',
-        clientId: 'marcus',
-        date: '2025-07-18',
-        duration: 60,
-        topic: 'Verkaufsteam-Motivation',
-        notes: 'Analyse der Team-Dynamik und Motivationsfaktoren',
-        outcome: 'Neues Incentive-System entwickelt'
-    }
-];
+const coachingCategories = window.coachingCategories;
 
 // KI-Response-Templates für realistische Simulationen
-const aiResponseTemplates = [
+window.aiResponseTemplates = [
     {
         context: 'goal-setting',
         responses: [
@@ -401,8 +387,10 @@ const aiResponseTemplates = [
     }
 ];
 
+const aiResponseTemplates = window.aiResponseTemplates;
+
 // Utility-Funktionen für Datenverarbeitung
-const dataUtils = {
+window.dataUtils = {
     // Client-Funktionen
     getClientById: (clientId) => {
         return clients.find(client => client.id === clientId);
@@ -451,16 +439,20 @@ const dataUtils = {
     }
 };
 
-// Export für Debugging (falls benötigt)
+const dataUtils = window.dataUtils;
+
+// Validierung und Debug-Output
+console.log('✅ Data.js geladen - Clients:', clients.length, 'Templates:', coachingTemplates.length);
+console.log('📋 Verfügbare Klienten:', clients.map(c => c.name));
+console.log('🔧 DataUtils verfügbar:', typeof dataUtils);
+
+// Sofortige Verfügbarkeit sicherstellen
 if (typeof window !== 'undefined') {
     window.appData = {
         clients,
         coachingTemplates,
         coachingCategories,
-        demoSessions,
         aiResponseTemplates,
         dataUtils
     };
 }
-
-console.log('✅ Data.js geladen - Clients:', clients.length, 'Templates:', coachingTemplates.length);
