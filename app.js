@@ -1,6 +1,6 @@
-// KI-Coaching App - Finale Version mit KI-Response Fix
-// Datum: 24. Juli 2025
-// Status: Vollständige Lösung für Kollaborations-Sync + KI-Response
+// KI-Coaching App - Finale Version mit clients.find Fix
+// Datum: 25. Juli 2025
+// Status: Vollständige Lösung für alle Probleme
 
 let currentState = {
     selectedClient: null,
@@ -21,33 +21,66 @@ let collaborationProtection = {
 // === INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 KI-Coaching App wird initialisiert...');
-    initializeApp();
+    
+    // Warten bis data.js geladen ist
+    if (typeof clients === 'undefined') {
+        console.log('⏳ Warte auf data.js...');
+        setTimeout(initializeApp, 100);
+    } else {
+        initializeApp();
+    }
+});
+
+function initializeApp() {
+    console.log('📋 App-Initialisierung gestartet');
+    
+    // Verify data is loaded
+    if (typeof clients === 'undefined' || !Array.isArray(clients)) {
+        console.error('❌ KRITISCHER FEHLER: clients Array nicht verfügbar');
+        showNotification('Daten konnten nicht geladen werden. Seite wird neu geladen...', 'error');
+        setTimeout(() => window.location.reload(), 2000);
+        return;
+    }
+    
+    console.log('✅ Clients Array verfügbar:', clients.length, 'Klienten');
+    
+    loadClients();
+    loadTemplates();
+    restoreSessionState();
+    checkCollaborationMode();
     setupEventListeners();
     startCollaborationMonitoring();
     
     // Debug-Tool für Troubleshooting
     window.debugCollaborationSync = debugCollaborationSync;
-});
-
-function initializeApp() {
-    console.log('📋 App-Initialisierung gestartet');
-    loadClients();
-    loadTemplates();
-    restoreSessionState();
-    checkCollaborationMode();
+    window.emergencyRestore = emergencyRestore;
+    
+    showNotification('App erfolgreich geladen!', 'success');
 }
 
 // === CLIENT MANAGEMENT ===
 function loadClients() {
     const clientGrid = document.getElementById('clientGrid');
-    if (!clientGrid) return;
+    if (!clientGrid) {
+        console.error('❌ clientGrid Element nicht gefunden');
+        return;
+    }
     
+    if (!Array.isArray(clients) || clients.length === 0) {
+        console.error('❌ Clients Array ist leer oder nicht verfügbar');
+        clientGrid.innerHTML = '<p class="error-message">Keine Klienten-Daten verfügbar</p>';
+        return;
+    }
+    
+    console.log('👥 Lade', clients.length, 'Klienten...');
     clientGrid.innerHTML = '';
     
     clients.forEach(client => {
         const clientCard = createClientCard(client);
         clientGrid.appendChild(clientCard);
     });
+    
+    console.log('✅ Klienten erfolgreich geladen');
 }
 
 function createClientCard(client) {
@@ -66,10 +99,23 @@ function createClientCard(client) {
 }
 
 function selectClient(clientId) {
-    console.log('👤 Klient ausgewählt:', clientId);
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return;
+    console.log('👤 Klient wird ausgewählt:', clientId);
     
+    // KRITISCHER FIX: Verify clients array exists and is array
+    if (!Array.isArray(clients)) {
+        console.error('❌ FEHLER: clients ist kein Array:', typeof clients, clients);
+        showNotification('Fehler beim Laden der Klienten-Daten', 'error');
+        return;
+    }
+    
+    const client = clients.find(c => c.id === clientId);
+    if (!client) {
+        console.error('❌ Klient nicht gefunden:', clientId);
+        showNotification('Klient konnte nicht gefunden werden', 'error');
+        return;
+    }
+    
+    console.log('✅ Klient erfolgreich ausgewählt:', client.name);
     currentState.selectedClient = client;
     updateClientDisplay();
     saveSessionState();
@@ -78,7 +124,14 @@ function selectClient(clientId) {
     document.querySelectorAll('.client-card').forEach(card => {
         card.classList.remove('selected');
     });
-    event.target.closest('.client-card').classList.add('selected');
+    
+    // Find and select the clicked card
+    const clickedCard = event?.target?.closest('.client-card');
+    if (clickedCard) {
+        clickedCard.classList.add('selected');
+    }
+    
+    showNotification(`Klient ${client.name} ausgewählt`, 'success');
 }
 
 function updateClientDisplay() {
@@ -111,9 +164,9 @@ function startSession() {
     
     updateSessionUI();
     saveSessionState();
-    
-    // Session-Timer starten
     startSessionTimer();
+    
+    showNotification(`Session mit ${currentState.selectedClient.name} gestartet`, 'success');
 }
 
 function stopSession() {
@@ -123,6 +176,8 @@ function stopSession() {
     
     updateSessionUI();
     saveSessionState();
+    
+    showNotification('Session beendet', 'info');
     
     // Optional: Session-Export anbieten
     if (confirm('Möchten Sie die Session-Daten exportieren?')) {
@@ -178,6 +233,12 @@ function loadTemplates() {
     const container = document.getElementById('templateContainer');
     if (!container) return;
     
+    if (!Array.isArray(coachingTemplates)) {
+        console.error('❌ coachingTemplates nicht verfügbar');
+        return;
+    }
+    
+    console.log('📚 Lade', coachingTemplates.length, 'Templates...');
     container.innerHTML = '';
     
     // Search Bar
@@ -200,6 +261,7 @@ function loadTemplates() {
     });
     
     container.appendChild(grid);
+    console.log('✅ Templates erfolgreich geladen');
 }
 
 function createTemplateCard(template) {
@@ -238,8 +300,17 @@ function clearTemplateSearch() {
 
 function useTemplate(templateId) {
     console.log('📝 Template verwendet:', templateId);
+    
+    if (!Array.isArray(coachingTemplates)) {
+        console.error('❌ coachingTemplates nicht verfügbar');
+        return;
+    }
+    
     const template = coachingTemplates.find(t => t.id === templateId);
-    if (!template) return;
+    if (!template) {
+        console.error('❌ Template nicht gefunden:', templateId);
+        return;
+    }
     
     currentState.currentTemplate = template;
     
@@ -250,13 +321,22 @@ function useTemplate(templateId) {
     }
     
     // UI Feedback
-    showNotification(`Template "${template.title}" wurde geladen.`);
+    showNotification(`Template "${template.title}" wurde geladen.`, 'success');
 }
 
 function editTemplate(templateId) {
     console.log('✏️ Template bearbeitet:', templateId);
+    
+    if (!Array.isArray(coachingTemplates)) {
+        console.error('❌ coachingTemplates nicht verfügbar');
+        return;
+    }
+    
     const template = coachingTemplates.find(t => t.id === templateId);
-    if (!template) return;
+    if (!template) {
+        console.error('❌ Template nicht gefunden:', templateId);
+        return;
+    }
     
     const editor = document.getElementById('promptEditor');
     if (editor) {
@@ -265,7 +345,7 @@ function editTemplate(templateId) {
     }
     
     currentState.currentTemplate = template;
-    showNotification(`Template "${template.title}" im Editor geöffnet.`);
+    showNotification(`Template "${template.title}" im Editor geöffnet.`, 'info');
 }
 
 // === COLLABORATION SYSTEM ===
@@ -284,525 +364,4 @@ function setupCollaborationMode() {
     document.body.classList.add('collaboration-mode');
     
     // Hide main navigation in collaboration mode
-    const nav = document.querySelector('.main-nav');
-    if (nav) nav.style.display = 'none';
-    
-    // Show collaboration interface
-    const collabInterface = document.getElementById('collaborationInterface');
-    if (collabInterface) {
-        collabInterface.style.display = 'block';
-    }
-}
-
-function startCollaborationMonitoring() {
-    console.log('🔍 Kollaborations-Monitoring gestartet');
-    
-    // Aggressive localStorage monitoring
-    setInterval(() => {
-        try {
-            const stored = localStorage.getItem('collaborationData');
-            if (stored) {
-                const data = JSON.parse(stored);
-                handleCollaborationUpdate(data);
-            }
-        } catch (error) {
-            console.error('Collaboration monitoring error:', error);
-        }
-    }, 200); // Very frequent checks
-    
-    // PostMessage listener for cross-frame communication
-    window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'collaboration') {
-            console.log('📨 PostMessage empfangen:', event.data);
-            handleCollaborationUpdate(event.data);
-        }
-    });
-}
-
-function handleCollaborationUpdate(data) {
-    if (!data || !data.prompt) return;
-    
-    const now = Date.now();
-    
-    // Anti-Override Protection
-    if (collaborationProtection.isProtected && 
-        collaborationProtection.lastUpdate && 
-        (now - collaborationProtection.lastUpdate) < 5000) {
-        console.log('🛡️ Anti-Override Schutz aktiv - Update ignoriert');
-        return;
-    }
-    
-    // Update protection system
-    collaborationProtection.isProtected = true;
-    collaborationProtection.protectedData = data;
-    collaborationProtection.lastUpdate = now;
-    
-    console.log('🔄 Kollaborations-Update verarbeitet:', data);
-    
-    currentState.collaborationData = data;
-    updateCollaborationDisplay(data);
-    
-    // Clear protection after delay
-    setTimeout(() => {
-        collaborationProtection.isProtected = false;
-    }, 10000);
-}
-
-function updateCollaborationDisplay(data) {
-    const display = document.getElementById('collaborationDisplay');
-    if (!display) return;
-    
-    console.log('🖥️ Kollaborations-Display wird aktualisiert');
-    
-    display.innerHTML = `
-        <div class="collaboration-content">
-            <div class="prompt-section">
-                <h3>Coaching-Prompt</h3>
-                <div class="prompt-display">${escapeHtml(data.prompt)}</div>
-            </div>
-            
-            ${data.aiResponse ? `
-                <div class="ai-response-section">
-                    <h3>KI-Antwort</h3>
-                    <div class="ai-response-display">${escapeHtml(data.aiResponse)}</div>
-                </div>
-            ` : ''}
-            
-            <div class="collaboration-actions">
-                <button onclick="approvePrompt()" class="btn-success">✅ Genehmigen</button>
-                <button onclick="rejectPrompt()" class="btn-danger">❌ Ablehnen</button>
-                <button onclick="requestChanges()" class="btn-warning">🔄 Änderungen anfordern</button>
-            </div>
-        </div>
-    `;
-    
-    display.style.display = 'block';
-}
-
-// === COLLABORATION ACTIONS ===
-function sendToCollaboration() {
-    const editor = document.getElementById('promptEditor');
-    if (!editor || !editor.value.trim()) {
-        alert('Bitte geben Sie einen Prompt ein.');
-        return;
-    }
-    
-    console.log('📤 Sende an Kollaboration:', editor.value);
-    
-    const collaborationData = {
-        type: 'collaboration',
-        prompt: editor.value.trim(),
-        timestamp: new Date().toISOString(),
-        client: currentState.selectedClient,
-        session: currentState.sessionActive
-    };
-    
-    // Simulate AI response generation
-    generateAIResponse(collaborationData);
-}
-
-function generateAIResponse(collaborationData) {
-    console.log('🤖 Generiere KI-Antwort...');
-    
-    // Show loading state
-    showNotification('KI-Antwort wird generiert...', 'info');
-    
-    // Simulate AI processing delay
-    setTimeout(() => {
-        const aiResponse = generateSimulatedResponse(collaborationData.prompt);
-        
-        const fullData = {
-            ...collaborationData,
-            aiResponse: aiResponse,
-            aiGeneratedAt: new Date().toISOString()
-        };
-        
-        // Store in localStorage with protection
-        try {
-            localStorage.setItem('collaborationData', JSON.stringify(fullData));
-            console.log('💾 Kollaborations-Daten gespeichert:', fullData);
-        } catch (error) {
-            console.error('Fehler beim Speichern der Kollaborations-Daten:', error);
-        }
-        
-        // Send via PostMessage
-        try {
-            window.parent.postMessage(fullData, '*');
-            console.log('📨 PostMessage gesendet:', fullData);
-        } catch (error) {
-            console.error('Fehler beim Senden der PostMessage:', error);
-        }
-        
-        // Update own display if in collaboration mode
-        if (currentState.collaborationMode) {
-            handleCollaborationUpdate(fullData);
-        }
-        
-        showNotification('KI-Antwort wurde generiert und gesendet.', 'success');
-    }, 2000);
-}
-
-function generateSimulatedResponse(prompt) {
-    const responses = [
-        `Basierend auf Ihrem Prompt "${prompt.substring(0, 50)}..." empfehle ich einen strukturierten Ansatz. Beginnen Sie mit einer offenen Frage, um die Perspektive Ihres Klienten zu verstehen. Führen Sie dann durch gezielte Nachfragen zu tieferen Einsichten.`,
-        
-        `Für diesen Coaching-Kontext schlage ich vor, zunächst den aktuellen Zustand zu explorieren. Nutzen Sie aktives Zuhören und Paraphrasieren, um Verständnis zu zeigen. Anschließend können Sie gemeinsam Ziele und Handlungsschritte entwickeln.`,
-        
-        `Ihr Prompt zeigt eine gute Coaching-Richtung. Ich empfehle, mit einer Skalierungsfrage zu beginnen: "Auf einer Skala von 1-10, wie zufrieden sind Sie aktuell mit...?" Dies hilft, den Status quo zu bewerten und Entwicklungspotentiale zu identifizieren.`,
-        
-        `Dieser Ansatz eignet sich gut für eine lösungsfokussierte Coaching-Session. Konzentrieren Sie sich auf Ressourcen und bereits vorhandene Stärken Ihres Klienten. Fragen Sie nach Ausnahmen: "Wann hat es schon einmal gut funktioniert?"`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-}
-
-function approvePrompt() {
-    console.log('✅ Prompt genehmigt');
-    const data = currentState.collaborationData;
-    
-    if (data) {
-        data.status = 'approved';
-        data.approvedAt = new Date().toISOString();
-        
-        // Update storage
-        localStorage.setItem('collaborationData', JSON.stringify(data));
-        
-        // Notify parent window
-        window.parent.postMessage({
-            type: 'collaboration_approved',
-            data: data
-        }, '*');
-    }
-    
-    showNotification('Prompt wurde genehmigt!', 'success');
-}
-
-function rejectPrompt() {
-    console.log('❌ Prompt abgelehnt');
-    const reason = prompt('Grund für die Ablehnung (optional):');
-    
-    const data = currentState.collaborationData;
-    if (data) {
-        data.status = 'rejected';
-        data.rejectedAt = new Date().toISOString();
-        data.rejectionReason = reason || '';
-        
-        localStorage.setItem('collaborationData', JSON.stringify(data));
-        
-        window.parent.postMessage({
-            type: 'collaboration_rejected',
-            data: data
-        }, '*');
-    }
-    
-    showNotification('Prompt wurde abgelehnt.', 'warning');
-}
-
-function requestChanges() {
-    console.log('🔄 Änderungen angefordert');
-    const changes = prompt('Welche Änderungen sind gewünscht?');
-    
-    if (!changes) return;
-    
-    const data = currentState.collaborationData;
-    if (data) {
-        data.status = 'changes_requested';
-        data.changesRequestedAt = new Date().toISOString();
-        data.requestedChanges = changes;
-        
-        localStorage.setItem('collaborationData', JSON.stringify(data));
-        
-        window.parent.postMessage({
-            type: 'collaboration_changes_requested',
-            data: data
-        }, '*');
-    }
-    
-    showNotification('Änderungen wurden angefordert.', 'info');
-}
-
-// === EXPORT FUNCTIONS ===
-function exportSession() {
-    if (!currentState.selectedClient) {
-        alert('Keine aktive Session zum Exportieren.');
-        return;
-    }
-    
-    const sessionData = {
-        client: currentState.selectedClient,
-        startTime: currentState.sessionStartTime,
-        endTime: new Date(),
-        template: currentState.currentTemplate,
-        collaborationData: currentState.collaborationData,
-        exportedAt: new Date().toISOString()
-    };
-    
-    const dataStr = JSON.stringify(sessionData, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
-    link.download = `coaching-session-${currentState.selectedClient.name}-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    showNotification('Session-Daten wurden exportiert.', 'success');
-}
-
-function exportAsMarkdown() {
-    if (!currentState.collaborationData) {
-        alert('Keine Kollaborations-Daten zum Exportieren.');
-        return;
-    }
-    
-    const data = currentState.collaborationData;
-    const markdown = `# Coaching Session Export
-
-## Klient
-**Name:** ${data.client ? data.client.name : 'Unbekannt'}
-**Datum:** ${new Date(data.timestamp).toLocaleString('de-DE')}
-
-## Coaching-Prompt
-\`\`\`
-${data.prompt}
-\`\`\`
-
-## KI-Antwort
-${data.aiResponse || 'Keine KI-Antwort verfügbar'}
-
-## Status
-**Status:** ${data.status || 'Pending'}
-**Exportiert am:** ${new Date().toLocaleString('de-DE')}
-`;
-    
-    const blob = new Blob([markdown], {type: 'text/markdown'});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `coaching-session-${new Date().toISOString().split('T')[0]}.md`;
-    link.click();
-    
-    showNotification('Markdown-Export abgeschlossen.', 'success');
-}
-
-// === UTILITY FUNCTIONS ===
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function showNotification(message, type = 'info') {
-    console.log(`📢 ${type.toUpperCase()}: ${message}`);
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Style the notification
-    Object.assign(notification.style, {
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        padding: '12px 20px',
-        borderRadius: '8px',
-        color: 'white',
-        fontWeight: 'bold',
-        zIndex: '10000',
-        opacity: '0',
-        transform: 'translateX(100%)',
-        transition: 'all 0.3s ease'
-    });
-    
-    // Type-specific colors
-    const colors = {
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
-        info: '#3b82f6'
-    };
-    notification.style.backgroundColor = colors[type] || colors.info;
-    
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateX(0)';
-    }, 10);
-    
-    // Auto remove
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 4000);
-}
-
-// === STATE MANAGEMENT ===
-function saveSessionState() {
-    try {
-        const stateToSave = {
-            ...currentState,
-            savedAt: new Date().toISOString()
-        };
-        localStorage.setItem('coachingAppState', JSON.stringify(stateToSave));
-        console.log('💾 Session-State gespeichert');
-    } catch (error) {
-        console.error('Fehler beim Speichern des Session-States:', error);
-    }
-}
-
-function restoreSessionState() {
-    try {
-        const saved = localStorage.getItem('coachingAppState');
-        if (saved) {
-            const parsedState = JSON.parse(saved);
-            
-            // Merge with current state
-            currentState = {
-                ...currentState,
-                ...parsedState,
-                sessionStartTime: parsedState.sessionStartTime ? new Date(parsedState.sessionStartTime) : null
-            };
-            
-            console.log('🔄 Session-State wiederhergestellt');
-            
-            // Update UI accordingly
-            if (currentState.selectedClient) {
-                updateClientDisplay();
-            }
-            if (currentState.sessionActive) {
-                updateSessionUI();
-                startSessionTimer();
-            }
-        }
-    } catch (error) {
-        console.error('Fehler beim Wiederherstellen des Session-States:', error);
-    }
-}
-
-// === EVENT LISTENERS ===
-function setupEventListeners() {
-    console.log('🎧 Event Listeners werden eingerichtet');
-    
-    // Prompt Editor
-    const editor = document.getElementById('promptEditor');
-    if (editor) {
-        editor.addEventListener('input', () => {
-            // Auto-save draft
-            localStorage.setItem('promptDraft', editor.value);
-        });
-        
-        // Restore draft
-        const draft = localStorage.getItem('promptDraft');
-        if (draft && !editor.value) {
-            editor.value = draft;
-        }
-    }
-    
-    // Navigation
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = link.getAttribute('href').substring(1);
-            showSection(target);
-        });
-    });
-    
-    // Window events
-    window.addEventListener('beforeunload', () => {
-        saveSessionState();
-    });
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            switch (e.key) {
-                case 's':
-                    e.preventDefault();
-                    saveSessionState();
-                    showNotification('State gespeichert!');
-                    break;
-                case 'e':
-                    e.preventDefault();
-                    if (currentState.collaborationData) {
-                        exportAsMarkdown();
-                    }
-                    break;
-            }
-        }
-    });
-}
-
-function showSection(sectionId) {
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
-    
-    // Show target section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.style.display = 'block';
-    }
-    
-    // Update navigation
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    document.querySelector(`.nav-link[href="#${sectionId}"]`)?.classList.add('active');
-}
-
-// === DEBUG FUNCTIONS ===
-function debugCollaborationSync() {
-    console.log('🔍 DEBUG: Kollaborations-Sync Status');
-    console.log('Current State:', currentState);
-    console.log('Collaboration Protection:', collaborationProtection);
-    console.log('LocalStorage Data:', localStorage.getItem('collaborationData'));
-    
-    // Test data injection
-    const testData = {
-        type: 'collaboration',
-        prompt: 'Debug Test Prompt ' + new Date().toLocaleTimeString(),
-        aiResponse: 'Debug Test Response ' + new Date().toLocaleTimeString(),
-        timestamp: new Date().toISOString()
-    };
-    
-    console.log('Injecting test data:', testData);
-    handleCollaborationUpdate(testData);
-}
-
-// Emergency restore function
-function emergencyRestore() {
-    console.log('🚨 Emergency Restore aktiviert');
-    
-    // Clear protection
-    collaborationProtection = {
-        isProtected: false,
-        protectedData: null,
-        lastUpdate: 0
-    };
-    
-    // Force reload of collaboration data
-    const stored = localStorage.getItem('collaborationData');
-    if (stored) {
-        try {
-            const data = JSON.parse(stored);
-            handleCollaborationUpdate(data);
-            showNotification('Emergency Restore abgeschlossen', 'success');
-        } catch (error) {
-            console.error('Emergency Restore Fehler:', error);
-            showNotification('Emergency Restore fehlgeschlagen', 'error');
-        }
-    }
-}
-
-// Make emergency function globally available
-window.emergencyRestore = emergencyRestore;
-
-console.log('✅ KI-Coaching App vollständig geladen - Version: Finale mit KI-Response Fix');
+    const nav = document.querySelector
