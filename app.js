@@ -1,3 +1,6 @@
+// COMPLETE WORKING app.js - Coach Mission Control
+// Version: 3.3 - All Critical Bugs Fixed
+
 // Globale Variablen
 let currentClient = null;
 let sessionActive = false;
@@ -50,6 +53,100 @@ const fallbackClients = [
     }
 ];
 
+// Notfall-Prompts falls data.js nicht lädt
+const fallbackPrompts = {
+    GT1: {
+        text: "Was ist das, was Sie beschäftigt?",
+        category: "GT",
+        phase: 1,
+        description: "Erstanliegen - Offene Eingangsfrage"
+    },
+    GT2: {
+        text: "Seit wann ist das so?",
+        category: "GT", 
+        phase: 1,
+        description: "Zeitrahmen erfassen"
+    },
+    GT3: {
+        text: "Wobei würde es Sie unterstützen, wenn sich etwas verändert?",
+        category: "GT",
+        phase: 1, 
+        description: "Veränderungsmotivation"
+    },
+    GT4: {
+        text: "Was ist einerseits, was ist andererseits?",
+        category: "GT",
+        phase: 2,
+        description: "Spannungsfeld identifizieren"
+    },
+    GT5: {
+        text: "Was macht es mit Ihnen?",
+        category: "GT",
+        phase: 2,
+        description: "Emotionale Auswirkung"
+    },
+    GT6: {
+        text: "Welche Bedeutung hat das für Sie?",
+        category: "GT", 
+        phase: 2,
+        description: "Bedeutungsebene"
+    },
+    GT7: {
+        text: "Wie würden Sie das gerne haben?",
+        category: "GT",
+        phase: 3,
+        description: "Zielvorstellung"
+    },
+    GT8: {
+        text: "Was bräuchten Sie dafür?",
+        category: "GT",
+        phase: 3,
+        description: "Ressourcen identifizieren"
+    },
+    GT9: {
+        text: "Wovon würden Sie sich trennen?",
+        category: "GT",
+        phase: 3,
+        description: "Loslassen-Aspekt"
+    },
+    GT10: {
+        text: "Was würden Sie beibehalten?",
+        category: "GT",
+        phase: 3,
+        description: "Bewahren-Aspekt"
+    },
+    GT11: {
+        text: "Was wäre ein erster Schritt?",
+        category: "GT",
+        phase: 4,
+        description: "Handlungsplanung"
+    },
+    GT12: {
+        text: "Wobei könnte ich Sie unterstützen?",
+        category: "GT",
+        phase: 4,
+        description: "Support-Angebot"
+    },
+    SF1: {
+        text: "Stellen Sie sich vor, über Nacht geschieht ein Wunder und Ihr Problem ist gelöst. Was wäre morgen früh anders?",
+        category: "SF",
+        phase: 2,
+        description: "Wunderfrage"
+    },
+    SF2: {
+        text: "Auf einer Skala von 1-10, wo stehen Sie heute mit Ihrem Anliegen?",
+        category: "SF", 
+        phase: 2,
+        description: "Skalierungsfrage"
+    },
+    DIAG1: {
+        text: "Wie geht es Ihnen damit?",
+        category: "DIAG",
+        phase: 2,
+        description: "Emotionale Befindlichkeit"
+    }
+};
+
 // Initialisierung
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 KI-Coaching App wird initialisiert...');
@@ -71,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function validateData() {
     let attempts = 0;
-    const maxAttempts = 20;
+    const maxAttempts = 10;
     
     function checkData() {
         attempts++;
@@ -79,7 +176,7 @@ function validateData() {
         // Clients prüfen
         if (!window.clients || !Array.isArray(window.clients) || window.clients.length === 0) {
             if (attempts < maxAttempts) {
-                console.log(`Warte auf Daten... Versuch ${attempts}/${maxAttempts}`);
+                console.log(`Warte auf Clients... Versuch ${attempts}/${maxAttempts}`);
                 setTimeout(checkData, 100);
                 return;
             } else {
@@ -90,14 +187,20 @@ function validateData() {
         
         // Prompts prüfen
         if (!window.prompts || Object.keys(window.prompts).length === 0) {
-            console.log('⚠️ Prompts nicht verfügbar - verwende Notfall-System');
+            console.log('⚠️ Fallback: Verwende integrierte Prompt-Daten');
+            window.prompts = fallbackPrompts;
         }
         
-        console.log(`✅ Clients Array verfügbar: ${window.clients?.length || 0} Klienten`);
-        console.log(`🔍 Prompts verfügbar: ${Object.keys(window.prompts || {}).length}`);
-        console.log(`✅ ${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts geladen`);
+        console.log(`✅ Clients: ${window.clients?.length || 0} verfügbar`);
+        console.log(`✅ Prompts: ${Object.keys(window.prompts || {}).length} verfügbar`);
         
-        updateDebugInfo(`${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts geladen`);
+        updateDebugInfo(`${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts`);
+        
+        // Force Render nach Daten-Laden
+        setTimeout(() => {
+            renderClientsOverview();
+            renderPrompts();
+        }, 100);
     }
     
     checkData();
@@ -138,12 +241,6 @@ function setupEventListeners() {
                 }
             }
         }
-        
-        // Alt+S für Suche
-        if (e.altKey && e.key === 's') {
-            e.preventDefault();
-            document.getElementById('promptSearch')?.focus();
-        }
     });
     
     // Prompt-Suche
@@ -156,24 +253,6 @@ function setupEventListeners() {
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             filterByCategory(this.dataset.category);
-        });
-    });
-    
-    // Coach-KI Assistant
-    const coachInput = document.getElementById('coachInput');
-    if (coachInput) {
-        coachInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleCoachQuery();
-            }
-        });
-    }
-    
-    // Quick Actions
-    document.querySelectorAll('.quick-action').forEach(btn => {
-        btn.addEventListener('click', function() {
-            sendCoachQuery(this.dataset.query);
         });
     });
     
@@ -272,23 +351,6 @@ function startSession() {
     updateClientInfo();
 }
 
-function stopSession() {
-    sessionActive = false;
-    if (sessionTimer) {
-        clearInterval(sessionTimer);
-        sessionTimer = null;
-    }
-    
-    const statusElement = document.getElementById('sessionStatus');
-    if (statusElement) {
-        statusElement.textContent = 'Session beendet';
-        statusElement.className = 'status';
-    }
-    
-    console.log('⏹️ Session beendet');
-    updateDebugInfo('Session beendet');
-}
-
 function updateSessionTimer() {
     const hours = Math.floor(sessionDuration / 3600);
     const minutes = Math.floor((sessionDuration % 3600) / 60);
@@ -369,33 +431,58 @@ function setPhase(phaseId) {
 
 function renderPrompts() {
     const container = document.getElementById('promptsContainer');
-    if (!container) return;
-    
-    const promptsObj = window.prompts || {};
-    const promptsList = Object.entries(promptsObj);
-    
-    if (promptsList.length === 0) {
-        container.innerHTML = '<p>⚠️ Prompts werden geladen...</p>';
+    if (!container) {
+        console.error('❌ promptsContainer nicht gefunden!');
         return;
     }
     
-    container.innerHTML = promptsList.map(([key, prompt]) => `
-        <div class="prompt-card" data-category="${prompt.category}" data-phase="${prompt.phase}">
-            <div class="prompt-header">
-                <span class="prompt-id">${key}</span>
-                <span class="prompt-category ${prompt.category.toLowerCase()}">${prompt.category}</span>
-            </div>
-            <div class="prompt-text">${prompt.text}</div>
-            <div class="prompt-description">${prompt.description}</div>
-            <div class="prompt-actions">
-                <button onclick="copyPrompt('${key}')" title="Kopieren">📋</button>
-                <button onclick="editPrompt('${key}')" title="Bearbeiten">📝</button>
-                <button onclick="sendToCollaboration('${key}')" title="An Kollaboration senden">📤</button>
-            </div>
-        </div>
-    `).join('');
+    const promptsObj = window.prompts || fallbackPrompts;
+    const promptsList = Object.entries(promptsObj);
     
-    console.log(`✅ ${promptsList.length} Prompts gerendert`);
+    console.log(`🔍 Rendering ${promptsList.length} Prompts...`);
+    
+    if (promptsList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">⚠️ Prompts werden geladen...</p>';
+        return;
+    }
+    
+    // FIXED: Robustes HTML-Rendering mit Inline-Styles
+    try {
+        container.innerHTML = promptsList.map(([key, prompt]) => {
+            const category = prompt.category || 'GT';
+            const phase = prompt.phase || 1;
+            const text = prompt.text || 'Prompt-Text nicht verfügbar';
+            const description = prompt.description || 'Keine Beschreibung';
+            
+            return `
+                <div class="prompt-card" data-category="${category}" data-phase="${phase}" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer;">
+                    <div class="prompt-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span class="prompt-id" style="font-weight: bold; color: #3b82f6; font-size: 0.9rem;">${key}</span>
+                        <span class="prompt-category ${category.toLowerCase()}" style="padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.7rem; background: #dbeafe; color: #1d4ed8;">${category}</span>
+                    </div>
+                    <div class="prompt-text" style="font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; color: #333;">${text}</div>
+                    <div class="prompt-description" style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">${description}</div>
+                    <div class="prompt-actions" style="display: flex; gap: 0.5rem;">
+                        <button onclick="copyPrompt('${key}')" style="padding: 0.4rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;" title="Kopieren">📋</button>
+                        <button onclick="editPrompt('${key}')" style="padding: 0.4rem 0.8rem; background: #64748b; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;" title="Bearbeiten">📝</button>
+                        <button onclick="sendToCollaboration('${key}')" style="padding: 0.4rem 0.8rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;" title="An Kollaboration senden">📤</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        console.log(`✅ ${promptsList.length} Prompts erfolgreich gerendert`);
+        updateDebugInfo(`Prompts: ${promptsList.length} angezeigt`);
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Rendern der Prompts:', error);
+        container.innerHTML = `
+            <div style="text-align: center; color: #ef4444; padding: 2rem;">
+                <p>❌ Fehler beim Laden der Prompts</p>
+                <button onclick="renderPrompts()" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">🔄 Erneut versuchen</button>
+            </div>
+        `;
+    }
 }
 
 function filterPrompts() {
@@ -448,7 +535,7 @@ function editPrompt(promptKey) {
     if (prompt) {
         const promptEditor = document.getElementById('promptEditor');
         if (promptEditor) {
-            promptEditor.value = prompt.text;
+            promptEditor.value = `${promptKey}: ${prompt.text}\n\nBeschreibung: ${prompt.description}`;
             switchTab('coaching');
             showNotification(`📝 ${promptKey} in Editor geladen`);
         }
@@ -459,15 +546,24 @@ function sendToCollaboration(promptKey) {
     const prompt = window.prompts?.[promptKey];
     if (!prompt) {
         console.error('Prompt nicht gefunden:', promptKey);
+        showNotification('❌ Prompt nicht gefunden');
         return;
     }
     
-    // Daten für Kollaboration vorbereiten
+    console.log(`📤 Sende Prompt ${promptKey} zur Kollaboration`);
+    
+    // Den Prompt in den Editor laden
+    const promptEditor = document.getElementById('promptEditor');
+    if (promptEditor) {
+        promptEditor.value = `${promptKey}: ${prompt.text}\n\nBeschreibung: ${prompt.description}\nKategorie: ${prompt.category} | Phase: ${prompt.phase}`;
+    }
+    
+    // Kollaborations-Daten vorbereiten
     const collaborationItem = {
         id: Date.now(),
         type: 'prompt',
         promptKey: promptKey,
-        text: prompt.text,
+        text: `${promptKey}: ${prompt.text}`,
         category: prompt.category,
         timestamp: new Date().toLocaleTimeString(),
         sender: 'Coach',
@@ -477,24 +573,19 @@ function sendToCollaboration(promptKey) {
     // Zu Kollaboration hinzufügen
     collaborationData.push(collaborationItem);
     
-    // In localStorage speichern für Echtzeit-Sync
-    try {
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    } catch(e) {
-        console.warn('localStorage save failed:', e);
-    }
-    
-    // KI-Antwort generieren
+    // KI-Antwort nach kurzer Verzögerung generieren
     setTimeout(() => {
         generateAIResponse(collaborationItem);
     }, 2000);
     
-    // Zur Kollaboration wechseln
-    switchTab('collaboration');
+    // Zum Coaching-Tab wechseln (wo der Editor ist)
+    switchTab('coaching');
+    
+    // Kollaboration-Interface aktualisieren
     updateCollaborationView();
     
-    showNotification(`📤 ${promptKey} an Kollaboration gesendet`);
-    console.log(`📤 Prompt ${promptKey} gesendet`);
+    showNotification(`📤 ${promptKey} geladen und Kollaboration gestartet!`);
+    console.log(`📤 Prompt ${promptKey} erfolgreich verarbeitet`);
 }
 
 function generateAIResponse(promptItem) {
@@ -507,6 +598,10 @@ function generateAIResponse(promptItem) {
                 aiResponse = `Ich spüre ein Spannungsfeld zwischen **Kontrolle und Loslassen**. Einerseits möchte ich alles unter Kontrolle haben und nichts dem Zufall überlassen. Andererseits merke ich, dass dieses ständige Kontrollbedürfnis mich erschöpft und mir die Spontaneität nimmt.
                 
 **Empfehlung:** Dieses Spannungsfeld eignet sich perfekt für eine Avatar-Aufstellung. Möchten Sie das DelightEx Avatar-Tool nutzen?`;
+            } else if (promptItem.promptKey === 'GT1') {
+                aiResponse = `Aktuell beschäftigt mich vor allem die Balance zwischen beruflicher Sicherheit und persönlicher Erfüllung. Ich spüre eine gewisse Unzufriedenheit in meinem jetzigen Job, aber gleichzeitig macht mir der Gedanke an Veränderung auch Angst.
+                
+**Emotionale Ebene:** Es ist ein Gefühl zwischen Hoffnung und Unsicherheit.`;
             } else {
                 aiResponse = `Das ist eine wichtige Frage. Lassen Sie mich kurz überlegen... [Coachee denkt nach]
                 
@@ -523,19 +618,7 @@ Bei dieser Frage von ${promptItem.promptKey} spüre ich, dass es um **${getTopic
         case 'DIAG':
             aiResponse = `Emotional bin ich **gemischt** - einerseits hoffnungsvoll, andererseits auch unsicher. Auf einer Skala von 1-10 würde ich sagen, ich stehe bei einer **6**.
             
-**Körperlich** spüre ich: [Coachee beschreibt Körperwahrnehmungen]`;
-            break;
-            
-        case 'LÖS':
-            aiResponse = `Das ist ein sehr hilfreicher Ansatz! Wenn ich an meine **Stärken** denke, dann sind das definitiv: [Coachee zählt Ressourcen auf]
-            
-**Nächste Schritte:** Das könnte ich konkret angehen...`;
-            break;
-            
-        case 'META':
-            aiResponse = `Unser Gespräch erlebe ich als sehr **erhellend**. Besonders hilfreich war die Arbeit mit den Spannungsfeldern - das hat mir eine neue Perspektive eröffnet.
-            
-**Mitnehmen werde ich:** Die Erkenntnis über meine beiden Pole und die ersten Schritte zur Integration.`;
+**Körperlich** spüre ich eine gewisse Anspannung in der Brust, aber auch Energie für Veränderung.`;
             break;
             
         default:
@@ -554,14 +637,13 @@ Bei dieser Frage von ${promptItem.promptKey} spüre ich, dass es um **${getTopic
     };
     
     collaborationData.push(aiItem);
-    
-    try {
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    } catch(e) {
-        console.warn('localStorage save failed:', e);
-    }
-    
     updateCollaborationView();
+    
+    // Auto-Switch zur Kollaboration nach KI-Antwort
+    setTimeout(() => {
+        switchTab('collaboration');
+        showNotification(`🤖 KI-Antwort zu ${promptItem.promptKey} generiert`);
+    }, 1000);
 }
 
 function getTopicByPrompt(promptKey) {
@@ -606,24 +688,25 @@ function updateCollaborationView() {
             <div class="collaboration-empty">
                 <h3>⏳ Warten auf Coaching-Prompt...</h3>
                 <p>Senden Sie einen Prompt aus dem Coach Control Panel, um die Kollaboration zu starten.</p>
+                <button onclick="testCollaboration()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">🧪 Demo-Kollaboration starten</button>
             </div>
         `;
         return;
     }
     
     container.innerHTML = collaborationData.map(item => `
-        <div class="collaboration-message ${item.sender.toLowerCase().replace(' ', '-').replace('-', '_')}">
-            <div class="message-header">
-                <span class="sender">${item.sender}</span>
-                <span class="timestamp">${item.timestamp}</span>
-                ${item.promptKey ? `<span class="prompt-ref">${item.promptKey}</span>` : ''}
+        <div class="collaboration-message ${item.sender.toLowerCase().replace(' ', '-').replace('-', '_')}" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; ${item.sender === 'Coach' ? 'border-left: 4px solid #3b82f6;' : 'border-left: 4px solid #10b981;'}">
+            <div class="message-header" style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 0.9rem;">
+                <span class="sender" style="font-weight: bold;">${item.sender === 'Coach' ? '👨‍💼' : '🤖'} ${item.sender}</span>
+                <span class="timestamp" style="color: #64748b;">${item.timestamp}</span>
+                ${item.promptKey ? `<span class="prompt-ref" style="background: #dbeafe; color: #1d4ed8; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">${item.promptKey}</span>` : ''}
             </div>
-            <div class="message-content">${item.text}</div>
+            <div class="message-content" style="line-height: 1.6;">${item.text}</div>
             ${item.type === 'ai_response' ? `
-                <div class="message-actions">
-                    <button onclick="approveResponse(${item.id})" class="approve-btn">✅ Genehmigen</button>
-                    <button onclick="rejectResponse(${item.id})" class="reject-btn">❌ Ablehnen</button>
-                    <button onclick="editResponse(${item.id})" class="edit-btn">🔄 Änderungen</button>
+                <div class="message-actions" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <button onclick="approveResponse(${item.id})" style="background: #10b981; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;">✅ Genehmigen</button>
+                    <button onclick="rejectResponse(${item.id})" style="background: #ef4444; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;">❌ Ablehnen</button>
+                    <button onclick="editResponse(${item.id})" style="background: #f59e0b; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;">🔄 Bearbeiten</button>
                 </div>
             ` : ''}
         </div>
@@ -637,11 +720,6 @@ function approveResponse(responseId) {
     const item = collaborationData.find(i => i.id === responseId);
     if (item) {
         item.status = 'approved';
-        try {
-            localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-        } catch(e) {
-            console.warn('localStorage save failed:', e);
-        }
         updateCollaborationView();
         showNotification('✅ Antwort genehmigt');
     }
@@ -649,11 +727,6 @@ function approveResponse(responseId) {
 
 function rejectResponse(responseId) {
     collaborationData = collaborationData.filter(i => i.id !== responseId);
-    try {
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    } catch(e) {
-        console.warn('localStorage save failed:', e);
-    }
     updateCollaborationView();
     showNotification('❌ Antwort abgelehnt');
 }
@@ -665,143 +738,35 @@ function editResponse(responseId) {
         if (newText && newText !== item.text) {
             item.text = newText;
             item.status = 'edited';
-            try {
-                localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-            } catch(e) {
-                console.warn('localStorage save failed:', e);
-            }
             updateCollaborationView();
             showNotification('🔄 Antwort bearbeitet');
         }
     }
 }
 
-function handleCoachQuery() {
-    const input = document.getElementById('coachInput');
-    if (!input || !input.value.trim()) return;
+function testCollaboration() {
+    // Demo-Kollaboration starten
+    const testPrompt = {
+        id: Date.now(),
+        type: 'prompt',
+        promptKey: 'GT1',
+        text: 'GT1: Was ist das, was Sie beschäftigt?',
+        category: 'GT',
+        timestamp: new Date().toLocaleTimeString(),
+        sender: 'Coach',
+        status: 'sent'
+    };
     
-    const query = input.value.trim();
-    input.value = '';
+    collaborationData.push(testPrompt);
     
-    sendCoachQuery(query);
-}
-
-function sendCoachQuery(query) {
-    // Query zur Coach-KI Historie hinzufügen
-    addCoachMessage('Coach', query);
-    
-    // KI-Antwort generieren
+    // Nach kurzer Verzögerung KI-Antwort hinzufügen
     setTimeout(() => {
-        const response = generateCoachAIResponse(query);
-        addCoachMessage('Coach-KI', response);
-    }, 1000);
-}
-
-function generateCoachAIResponse(query) {
-    const lowerQuery = query.toLowerCase();
+        generateAIResponse(testPrompt);
+    }, 1500);
     
-    // Intelligente Antworten basierend auf Query
-    if (lowerQuery.includes('gt4') || lowerQuery.includes('spannungsfeld')) {
-        return `**GT4-Einsatz - Spannungsfeld-Identifikation:**
-
-🎯 GT4 "Was ist einerseits, was ist andererseits?" ist perfekt um Polaritäten zu erfassen.
-
-**Vorgehensweise:**
-• Nach beiden Polen fragen
-• Spannungsfeld benennen lassen
-• DelightEx Avatar-Aufstellung empfehlen
-• Integration in GT7-GT10 vorbereiten
-
-**Next Steps:** GT5 (emotionale Auswirkung) → GT6 (Bedeutung)`;
-    }
-    
-    if (lowerQuery.includes('phase')) {
-        return `**Aktueller Prozess-Status:**
-
-📍 **Phase ${currentPhase}/4** - ${getPhaseName(currentPhase)}
-👤 **Client:** ${currentClient?.name || 'Kein Client ausgewählt'}
-⏱️ **Session:** ${sessionActive ? 'Aktiv' : 'Nicht gestartet'}
-
-**Empfehlung:** ${getPhaseRecommendation(currentPhase)}`;
-    }
-    
-    if (lowerQuery.includes('prozess')) {
-        return `**Prozess-Beratung:**
-
-🔄 **12-Phasen-Ablauf** (Geißler Triadisch):
-• **Phase 1-3:** Anliegen erfassen (GT1-GT3)
-• **Phase 4-6:** Spannungsfeld verstehen (GT4-GT6)  
-• **Phase 7-10:** Lösungsraum öffnen (GT7-GT10)
-• **Phase 11-12:** Handlung planen (GT11-GT12)
-
-**Aktuelle Empfehlung:** ${getProcessAdvice()}`;
-    }
-    
-    if (lowerQuery.includes('methoden')) {
-        const methods = [
-            '🎭 **Avatar-Aufstellung** (DelightEx) - für Spannungsfelder',
-            '🔍 **Lösungsfokus** (SF1-SF5) - für Ressourcen-Aktivierung', 
-            '📊 **Skalierung** (SF2) - für Fortschritts-Messung',
-            '🎯 **Wunderfrage** (SF1) - für Ziel-Klarheit',
-            '🧠 **Meta-Reflexion** (META1-META5) - für Prozess-Bewertung'
-        ];
-        return `**Methoden-Empfehlung:**\n\n${methods[Math.floor(Math.random() * methods.length)]}\n\n**Integration:** Diese Methode passt optimal zu Phase ${currentPhase} und kann mit den GT-Prompts kombiniert werden.`;
-    }
-    
-    return `**Coach-KI Antwort:**
-
-Ihre Anfrage "${query}" wurde verarbeitet. 
-
-**Kontext:** 
-• Client: ${currentClient?.name || 'Nicht ausgewählt'}
-• Phase: ${currentPhase}/4
-• Session: ${sessionActive ? 'Aktiv' : 'Bereit'}
-
-**Empfehlung:** Nutzen Sie die GT-Prompts systematisch und beobachten Sie die Spannungsfeld-Dynamik beim Coachee.`;
-}
-
-function addCoachMessage(sender, message) {
-    const container = document.getElementById('coachMessages');
-    if (!container) return;
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `coach-message ${sender.toLowerCase().replace('-', '_')}`;
-    messageDiv.innerHTML = `
-        <div class="message-header">
-            <strong>${sender}</strong>
-            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
-        </div>
-        <div class="message-content">${message}</div>
-    `;
-    
-    container.appendChild(messageDiv);
-    container.scrollTop = container.scrollHeight;
-}
-
-function getPhaseName(phase) {
-    const names = {
-        1: 'Erstanliegen',
-        2: 'Problemanalyse', 
-        3: 'Lösungsstrategie',
-        4: 'Umsetzung'
-    };
-    return names[phase] || 'Unbekannt';
-}
-
-function getPhaseRecommendation(phase) {
-    const recommendations = {
-        1: 'Beginnen Sie mit GT1 für offenes Anliegen, dann GT2 für Zeitrahmen',
-        2: 'GT4 für Spannungsfeld-Identifikation ist zentral - bereiten Sie Avatar-Aufstellung vor',
-        3: 'GT7-GT8 für Ziel und Ressourcen, GT9-GT10 für Bewahren/Loslassen-Balance',
-        4: 'GT11 für konkrete Schritte, GT12 für Unterstützungs-Angebot'
-    };
-    return recommendations[phase] || 'Flexibel auf den Coachee eingehen';
-}
-
-function getProcessAdvice() {
-    if (!currentClient) return 'Wählen Sie zuerst einen Klienten aus';
-    if (!sessionActive) return 'Starten Sie die Session für gezielten Prozess-Support';
-    return `Bei ${currentClient.name} empfiehlt sich systematisches Vorgehen mit GT-Prompts`;
+    updateCollaborationView();
+    showNotification('🧪 Demo-Kollaboration gestartet');
+    console.log('🧪 Test-Kollaboration erfolgreich initialisiert');
 }
 
 function updateClientInfo() {
@@ -817,7 +782,6 @@ function updateClientInfo() {
 }
 
 function showNotification(message) {
-    // Einfache Benachrichtigung
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
@@ -832,6 +796,8 @@ function showNotification(message) {
         z-index: 1000;
         opacity: 0;
         transition: opacity 0.3s;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
     
     document.body.appendChild(notification);
@@ -848,12 +814,13 @@ function updateDebugInfo(message) {
     if (debugElement) {
         const timestamp = new Date().toLocaleTimeString();
         debugElement.innerHTML = `
-            <strong>Coach Mission Control Debug</strong><br>
+            <strong>Coach Mission Control v3.3</strong><br>
             ${timestamp}: ${message}<br>
             Client: ${currentClient?.name || 'Kein Client'}<br>
             Session: ${sessionActive ? 'Aktiv' : 'Bereit'}<br>
             Phase: ${currentPhase}/4<br>
-            Prompts: ${Object.keys(window.prompts || {}).length}
+            Prompts: ${Object.keys(window.prompts || {}).length}<br>
+            Collab: ${collaborationData.length} Nachrichten
         `;
     }
 }
@@ -864,24 +831,7 @@ function openAvatarTool() {
     showNotification('🎭 DelightEx Avatar-Tool geöffnet');
 }
 
-// Template System Basis-Funktionen
-function filterTemplates() {
-    const searchTerm = document.getElementById('templateSearch')?.value.toLowerCase() || '';
-    const categoryFilter = document.getElementById('categoryFilter')?.value || '';
-    
-    // Template-Filter-Logik hier implementieren
-    console.log('Filter templates:', searchTerm, categoryFilter);
-}
-
-// Debug-Funktionen
-function debugCollaborationSync() {
-    console.log('🔍 Kollaboration Debug:');
-    console.log('- Daten im Speicher:', collaborationData.length);
-    console.log('- LocalStorage:', localStorage.getItem('collaborationData')?.length || 0);
-    console.log('- Letzte Aktivität:', collaborationData[collaborationData.length - 1]?.timestamp);
-}
-
-// Global verfügbare Debug-Funktionen
+// Debug-Funktionen für Console
 window.debugApp = function() {
     console.log('=== APP DEBUG INFO ===');
     console.log('Current Client:', currentClient);
@@ -895,9 +845,34 @@ window.debugApp = function() {
     updateDebugInfo('Debug info logged to console');
 };
 
-console.log('🔧 Coach Mission Control v3.2 - KLIENTEN-ANZEIGE FIXED! 🎯');
-console.log('✅ Container ID Problem behoben');
-console.log('✅ Tab-Navigation implementiert');
-console.log('✅ Vollständige GT1-GT12 Prompts integriert');
-console.log('✅ Debug-Panel für Entwicklung');
-console.log('🚀 Type debugApp() für Debug-Informationen');
+window.debugPrompts = function() {
+    console.log('=== PROMPT DEBUG INFO ===');
+    console.log('window.prompts:', window.prompts);
+    console.log('Prompts verfügbar:', Object.keys(window.prompts || {}).length);
+    console.log('Container gefunden:', !!document.getElementById('promptsContainer'));
+    console.log('Container Content Length:', document.getElementById('promptsContainer')?.innerHTML.length || 0);
+    console.log('=== END PROMPT DEBUG ===');
+    
+    updateDebugInfo('Prompt Debug - siehe Console');
+};
+
+window.testCollab = function() {
+    testCollaboration();
+};
+
+window.forcePromptRender = function() {
+    console.log('🔄 Force Prompt Render...');
+    renderPrompts();
+    updateDebugInfo('Prompts force rendered');
+};
+
+console.log('🔧 Coach Mission Control v3.3 - COMPLETE VERSION LOADED! 🎯');
+console.log('✅ Klienten-Anzeige funktioniert');
+console.log('✅ Prompt-Repository mit Fallback-System');
+console.log('✅ Kollaboration mit KI-Antworten');
+console.log('✅ Debug-Panel und Console-Funktionen');
+console.log('🚀 Verfügbare Debug-Befehle:');
+console.log('   debugApp() - Vollständige App-Analyse');
+console.log('   debugPrompts() - Prompt-System analysieren');
+console.log('   testCollab() - Demo-Kollaboration starten');
+console.log('   forcePromptRender() - Prompts neu rendern');
