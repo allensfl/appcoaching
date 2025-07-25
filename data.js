@@ -1,527 +1,432 @@
-// COACHING DATA & TEMPLATES
-// Basierend auf der professionellen Coaching-Wissensbasis
+// KI-Coaching App - Korrekte Daten (funktioniert mit jed6wdhyg Version)
+// Basierend auf der bewährten funktionierenden Version
 
-// KLIENTEN-DATENBANK
-const clients = [
+// KRITISCH: Client-Datenbank (muss als Array definiert sein!)
+window.clients = [
     {
-        id: "sarah",
-        name: "Sarah Müller",
-        role: "Projektmanagerin", 
-        company: "Tech Solutions GmbH",
-        avatar: "SM",
-        email: "sarah.mueller@techsolutions.de",
-        phone: "+49 30 12345678",
-        currentIssues: ["Zeitmanagement", "Teamführung", "Work-Life-Balance"],
-        coachingHistory: [
-            {
-                date: "2025-01-15",
-                phase: "Ersttermin",
-                focus: "Anliegen-Exploration",
-                notes: "Hohe Arbeitsbelastung, Delegationsprobleme"
-            }
-        ],
-        preferences: {
-            communicationStyle: "direkt",
-            learningType: "visuell",
-            pace: "strukturiert"
-        }
+        id: 'sarah',
+        name: 'Sarah Müller',
+        role: 'Projektmanagerin',
+        company: 'Tech Solutions GmbH',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
+        expertise: ['Zeitmanagement', 'Teamführung', 'Projektorganisation'],
+        goals: ['Work-Life-Balance verbessern', 'Delegation lernen', 'Stressreduktion'],
+        background: 'Erfahrene Projektmanagerin mit 8 Jahren Berufserfahrung, kämpft mit der Balance zwischen beruflichen Anforderungen und persönlichem Leben.'
     },
     {
-        id: "marcus",
-        name: "Marcus Schmidt",
-        role: "Vertriebsleiter",
-        company: "Innovation Sales AG", 
-        avatar: "MS",
-        email: "m.schmidt@innovation-sales.com",
-        phone: "+49 40 98765432",
-        currentIssues: ["Führungsstil", "Konflikte im Team", "Strategieentwicklung"],
-        coachingHistory: [
-            {
-                date: "2025-01-20",
-                phase: "Problemanalyse",
-                focus: "Führungsverhalten",
-                notes: "Autoritärer Stil, Team demotiviert"
-            }
-        ],
-        preferences: {
-            communicationStyle: "analytisch",
-            learningType: "auditiv",
-            pace: "intensiv"
-        }
+        id: 'marcus',
+        name: 'Marcus Schmidt',
+        role: 'Vertriebsleiter',
+        company: 'Innovation Corp',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+        expertise: ['Verkaufsstrategien', 'Kundenbeziehungen', 'Teamführung'],
+        goals: ['Verkaufszahlen steigern', 'Team motivieren', 'Neue Märkte erschließen'],
+        background: 'Dynamischer Vertriebsleiter mit 10 Jahren Erfahrung, sucht neue Wege zur Teamoptimierung und Marktexpansion.'
     },
     {
-        id: "lisa",
-        name: "Lisa Weber",
-        role: "Marketing-Direktorin",
-        company: "Creative Marketing Hub",
-        avatar: "LW", 
-        email: "lisa.weber@creative-hub.de",
-        phone: "+49 89 55567890",
-        currentIssues: ["Entscheidungsfindung", "Selbstvertrauen", "Karriereplanung"],
-        coachingHistory: [
-            {
-                date: "2025-01-10",
-                phase: "Zielklärung",
-                focus: "Karriere-Vision",
-                notes: "Unsicherheit über nächste Schritte"
-            }
-        ],
-        preferences: {
-            communicationStyle: "empathisch",
-            learningType: "kinästhetisch", 
-            pace: "behutsam"
-        }
+        id: 'lisa',
+        name: 'Lisa Weber',
+        role: 'Marketing-Direktorin',
+        company: 'Creative Agency Plus',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+        expertise: ['Digitales Marketing', 'Markenaufbau', 'Kreativstrategie'],
+        goals: ['Digitale Transformation vorantreiben', 'Kreativteam entwickeln', 'ROI optimieren'],
+        background: 'Innovative Marketing-Direktorin mit Fokus auf digitale Strategien, möchte ihr Team in der sich schnell wandelnden Digitalisierung führen.'
     },
     {
-        id: "werner",
-        name: "Werner Hoffmann",
-        role: "IT-Leiter",
-        company: "Digital Systems GmbH",
-        avatar: "WH",
-        email: "w.hoffmann@digital-systems.de", 
-        phone: "+49 69 44478901",
-        currentIssues: ["Change Management", "Technologie-Strategien", "Mitarbeiterentwicklung"],
-        coachingHistory: [
-            {
-                date: "2025-01-25",
-                phase: "Lösungsentwicklung",
-                focus: "Change-Prozess",
-                notes: "Widerstand im Team gegen neue Technologien"
-            }
-        ],
-        preferences: {
-            communicationStyle: "sachlich",
-            learningType: "visuell-analytisch",
-            pace: "systematisch"
-        }
+        id: 'werner',
+        name: 'Werner Hoffmann',
+        role: 'IT-Leiter',
+        company: 'DataFlow Systems',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        expertise: ['Technische Führung', 'Systemarchitektur', 'Agile Methoden'],
+        goals: ['Technische Excellence erreichen', 'Entwicklerteam fördern', 'Innovation vorantreiben'],
+        background: 'Erfahrener IT-Leiter mit 12 Jahren Führungserfahrung, konzentriert sich auf technische Innovation und Teamentwicklung.'
     }
 ];
 
-// COACHING TEMPLATES basierend auf Geißler Triadik
-const coachingTemplates = [
+// Für Kompatibilität auch als const definieren
+const clients = window.clients;
+
+// Coaching-Templates Bibliothek (basierend auf bewährter Version)
+window.coachingTemplates = [
     {
-        id: "gt_erstanliegen",
-        title: "GT Erstanliegen-Exploration",
-        category: "Geißler Triadisch",
-        phase: 1,
-        description: "Systematische Anliegen-Exploration nach Geißler",
-        prompts: [
-            {
-                step: 1,
-                prompt: "GT1",
-                text: "Was beschäftigt Sie denn gerade? Womit kann ich Ihnen heute helfen?",
-                purpose: "Offene Anliegen-Exploration"
-            },
-            {
-                step: 2,
-                prompt: "GT2", 
-                text: "Können Sie mir das Problem noch etwas genauer beschreiben?",
-                purpose: "Problemkonkretisierung"
-            },
-            {
-                step: 3,
-                prompt: "GT3",
-                text: "Was wäre Ihr Wunschzustand? Wie sähe eine gute Lösung aus?",
-                purpose: "Zielklärung"
-            },
-            {
-                step: 4,
-                prompt: "GT4",
-                text: "Zwischen welchen Polen bewegen Sie sich? Was steht sich gegenüber?",
-                purpose: "Spannungsfeld-Identifikation"
-            }
-        ],
-        duration: "20-30 Minuten",
-        outcome: "Klares Anliegen und Spannungsfeld identifiziert"
+        id: 'goal-setting',
+        title: 'SMART Ziele setzen',
+        category: 'Zielsetzung',
+        description: 'Hilft Klienten dabei, spezifische, messbare, erreichbare, relevante und zeitgebundene Ziele zu definieren.',
+        prompt: `Lassen Sie uns gemeinsam ein SMART-Ziel für Sie entwickeln:
+
+🎯 ZIEL-DEFINITION:
+- Was möchten Sie genau erreichen?
+- Warum ist dieses Ziel wichtig für Sie?
+
+📊 MESSBARKEIT:
+- Woran werden Sie erkennen, dass Sie das Ziel erreicht haben?
+- Welche konkreten Indikatoren gibt es?
+
+🚀 ERREICHBARKEIT:
+- Welche Ressourcen und Fähigkeiten haben Sie bereits?
+- Was benötigen Sie noch, um erfolgreich zu sein?
+
+⭐ RELEVANZ:
+- Wie passt dieses Ziel zu Ihren übergeordneten Werten und Visionen?
+- Welchen Einfluss hat es auf andere Lebensbereiche?
+
+⏰ ZEITRAHMEN:
+- Bis wann möchten Sie das Ziel erreicht haben?
+- Welche Zwischenschritte können Sie definieren?
+
+Beginnen wir: Was ist Ihr wichtigstes Ziel für die nächsten 3 Monate?`
+    },
+    {
+        id: 'obstacle-analysis',
+        title: 'Hindernisse überwinden',
+        category: 'Problemlösung',
+        description: 'Systematische Analyse von Hindernissen und Entwicklung von Lösungsstrategien.',
+        prompt: `Lassen Sie uns die Hindernisse auf Ihrem Weg analysieren und Lösungen entwickeln:
+
+🚧 HINDERNIS-IDENTIFIKATION:
+- Welches Hindernis beschäftigt Sie aktuell am meisten?
+- Wie lange besteht dieses Problem bereits?
+
+🔍 URSACHEN-ANALYSE:
+- Was sind die Grundursachen dieses Hindernisses?
+- Welche Faktoren liegen in Ihrem Einflussbereich?
+- Was liegt außerhalb Ihrer Kontrolle?
+
+💪 RESSOURCEN-MAPPING:
+- Welche Stärken und Fähigkeiten können Sie nutzen?
+- Wer könnte Sie dabei unterstützen?
+- Welche Erfahrungen haben Sie bereits gemacht?
+
+🛠️ LÖSUNGSSTRATEGIEN:
+- Welche verschiedenen Ansätze könnten funktionieren?
+- Was ist der kleinstmögliche erste Schritt?
+
+📈 ERFOLGS-TRACKING:
+- Woran werden Sie Fortschritt messen?
+- Wie werden Sie sich motiviert halten?
+
+Beschreiben Sie mir das Hindernis, das Sie aktuell am meisten belastet.`
+    },
+    {
+        id: 'strength-discovery',
+        title: 'Stärken entdecken',
+        category: 'Selbstreflexion',
+        description: 'Hilft dabei, verborgene Stärken zu identifizieren und zu nutzen.',
+        prompt: `Entdecken wir gemeinsam Ihre einzigartigen Stärken:
+
+⭐ ERFOLGS-REFLEXION:
+- Denken Sie an einen Moment, in dem Sie besonders stolz auf sich waren
+- Was haben Sie in dieser Situation gut gemacht?
+- Welche Ihrer Eigenschaften haben zum Erfolg beigetragen?
+
+🎯 FLOW-MOMENTE:
+- Bei welchen Tätigkeiten vergessen Sie die Zeit?
+- Was fällt Ihnen besonders leicht?
+- Womit beschäftigen Sie sich gerne in Ihrer Freizeit?
+
+🗣️ FEEDBACK-ANALYSE:
+- Welches positive Feedback haben Sie kürzlich erhalten?
+- Wofür werden Sie häufig um Rat gefragt?
+- Was schätzen andere an Ihrer Arbeitsweise?
+
+🚀 ENERGIE-QUELLEN:
+- Welche Aufgaben geben Ihnen Energie?
+- In welchen Situationen fühlen Sie sich am lebendigsten?
+
+💡 STÄRKEN-ANWENDUNG:
+- Wie könnten Sie diese Stärken noch besser nutzen?
+- In welchen neuen Bereichen könnten sie hilfreich sein?
+
+Erzählen Sie mir von einem Ihrer größten beruflichen Erfolge der letzten Zeit.`
+    },
+    {
+        id: 'time-management',
+        title: 'Zeitmanagement optimieren',
+        category: 'Produktivität',
+        description: 'Strategien für effektives Zeitmanagement und Prioritätensetzung.',
+        prompt: `Optimieren wir Ihr Zeitmanagement systematisch:
+
+⏰ IST-ANALYSE:
+- Wie sieht ein typischer Arbeitstag bei Ihnen aus?
+- Womit verbringen Sie die meiste Zeit?
+- Was raubt Ihnen regelmäßig Zeit?
+
+🎯 PRIORITÄTEN-MATRIX:
+- Was sind Ihre wichtigsten Aufgaben diese Woche?
+- Welche Tätigkeiten haben hohen Impact?
+- Was könnte delegiert oder eliminiert werden?
+
+🚫 ZEITFRESSER-IDENTIFIKATION:
+- Welche Unterbrechungen stören Sie am häufigsten?
+- Wo verlieren Sie sich in Details?
+- Welche Meetings sind wenig produktiv?
+
+🛠️ TOOL-OPTIMIERUNG:
+- Welche Zeitmanagement-Methoden kennen Sie bereits?
+- Was funktioniert gut, was weniger?
+- Welche Tools nutzen Sie aktuell?
+
+📊 ERFOLGS-MESSUNG:
+- Woran messen Sie produktive Zeit?
+- Wie könnten Sie Ihren Fortschritt verfolgen?
+
+⚡ ENERGIE-MANAGEMENT:
+- Wann sind Sie am produktivsten?
+- Wie könnten Sie Ihre Energie besser einteilen?
+
+Beschreiben Sie mir Ihre größte Zeitmanagement-Herausforderung.`
+    },
+    {
+        id: 'leadership-development',
+        title: 'Führungskompetenz entwickeln',
+        category: 'Leadership',
+        description: 'Entwicklung von Führungsqualitäten und Kommunikationsfähigkeiten.',
+        prompt: `Entwickeln wir Ihre Führungskompetenzen gezielt weiter:
+
+👥 FÜHRUNGSSTIL-REFLEXION:
+- Wie würden Sie Ihren aktuellen Führungsstil beschreiben?
+- In welchen Situationen führen Sie am besten?
+- Was ist Ihre Führungsphilosophie?
+
+🎯 TEAM-DYNAMIK:
+- Wie motivieren Sie Ihr Team aktuell?
+- Welche Herausforderungen gibt es im Team?
+- Wie gehen Sie mit Konflikten um?
+
+💬 KOMMUNIKATIONS-ANALYSE:
+- Wie kommunizieren Sie wichtige Entscheidungen?
+- Wie geben Sie Feedback?
+- Wie führen Sie schwierige Gespräche?
+
+🌱 ENTWICKLUNGS-FOKUS:
+- Welche Führungsqualität möchten Sie stärken?
+- Was bewundern Sie an anderen Führungskräften?
+- Wo sehen Sie Ihr größtes Entwicklungspotential?
+
+📈 IMPACT-MESSUNG:
+- Woran erkennen Sie erfolgreiches Führen?
+- Wie messen Sie die Zufriedenheit Ihres Teams?
+- Welche Erfolge konnten Sie bereits erzielen?
+
+🚀 VISIONS-ENTWICKLUNG:
+- Welche Vision haben Sie für Ihr Team/Ihre Organisation?
+- Wie kommunizieren Sie diese Vision?
+
+Erzählen Sie mir von einer Führungssituation, die Sie besonders gefordert hat.`
+    },
+    {
+        id: 'change-management',
+        title: 'Veränderung meistern',
+        category: 'Change',
+        description: 'Strategien für den Umgang mit beruflichen und persönlichen Veränderungen.',
+        prompt: `Meistern wir die anstehenden Veränderungen gemeinsam:
+
+🔄 VERÄNDERUNGS-ANALYSE:
+- Welche Veränderung steht bei Ihnen an?
+- Was löst diese Veränderung in Ihnen aus?
+- Was sind Ihre größten Bedenken?
+
+🎯 CHANCEN-PERSPEKTIVE:
+- Welche Möglichkeiten eröffnet diese Veränderung?
+- Was könnte sich positiv entwickeln?
+- Welche neuen Fähigkeiten könnten Sie entwickeln?
+
+💪 RESSOURCEN-INVENTAR:
+- Welche Veränderungen haben Sie bereits erfolgreich gemeistert?
+- Was hat Ihnen dabei geholfen?
+- Wer kann Sie in dieser Situation unterstützen?
+
+📋 AKTIONS-PLANUNG:
+- Welche konkreten Schritte können Sie heute unternehmen?
+- Was liegt in Ihrem direkten Einflussbereich?
+- Wie können Sie sich auf die Veränderung vorbereiten?
+
+🧘 EMOTIONALE BEWÄLTIGUNG:
+- Wie gehen Sie normalerweise mit Unsicherheit um?
+- Was hilft Ihnen beim Stressabbau?
+- Wie können Sie Ihre Resilienz stärken?
+
+🔮 ZUKUNFTS-VISION:
+- Wie sehen Sie sich nach erfolgreicher Bewältigung der Veränderung?
+- Was wird dann anders/besser sein?
+
+Erzählen Sie mir von der Veränderung, die aktuell vor Ihnen liegt.`
+    },
+    {
+        id: 'work-life-balance',
+        title: 'Work-Life-Balance finden',
+        category: 'Balance',
+        description: 'Strategien für eine gesunde Balance zwischen Beruf und Privatleben.',
+        prompt: `Finden wir gemeinsam Ihre optimale Work-Life-Balance:
+
+⚖️ BALANCE-CHECK:
+- Wie zufrieden sind Sie aktuell mit Ihrer Work-Life-Balance (1-10)?
+- Was läuft gut, was weniger?
+- Wo spüren Sie das größte Ungleichgewicht?
+
+🏠 LEBENSBEREICHE-ANALYSE:
+- Wie viel Zeit investieren Sie in verschiedene Lebensbereiche?
+- Familie, Karriere, Gesundheit, Hobbys, soziale Kontakte?
+- Welcher Bereich kommt zu kurz?
+
+🎯 WERTE-KLÄRUNG:
+- Was ist Ihnen im Leben wirklich wichtig?
+- Welche Werte möchten Sie stärker leben?
+- Wo entstehen Konflikte zwischen verschiedenen Prioritäten?
+
+🚧 GRENZ-MANAGEMENT:
+- Wie trennen Sie Beruf und Privatleben?
+- Welche Grenzen möchten Sie ziehen?
+- Was fällt Ihnen beim "Abschalten" schwer?
+
+⚡ ENERGIE-VERTEILUNG:
+- Wofür verwenden Sie die meiste Energie?
+- Was gibt Ihnen Energie, was raubt sie?
+- Wie könnten Sie Ihre Energie besser einteilen?
+
+🛠️ PRAKTISCHE STRATEGIEN:
+- Welche konkreten Veränderungen wären hilfreich?
+- Was ist der erste kleine Schritt?
+- Wie können Sie neue Gewohnheiten etablieren?
+
+Beschreiben Sie mir, wie ein perfekter Tag für Sie aussehen würde.`
+    },
+    {
+        id: 'decision-making',
+        title: 'Entscheidungen treffen',
+        category: 'Entscheidungsfindung',
+        description: 'Systematischer Ansatz für wichtige Entscheidungen.',
+        prompt: `Treffen wir gemeinsam eine fundierte Entscheidung:
+
+❓ ENTSCHEIDUNGS-KONTEXT:
+- Vor welcher Entscheidung stehen Sie?
+- Warum ist diese Entscheidung wichtig?
+- Welcher Zeitdruck besteht?
+
+⚖️ OPTIONEN-ANALYSE:
+- Welche Möglichkeiten haben Sie?
+- Was sind die Vor- und Nachteile jeder Option?
+- Gibt es weitere Alternativen, die Sie noch nicht betrachtet haben?
+
+🎯 KRITERIEN-DEFINITION:
+- Was ist Ihnen bei dieser Entscheidung am wichtigsten?
+- Welche Faktoren müssen unbedingt berücksichtigt werden?
+- Wie gewichten Sie verschiedene Aspekte?
+
+🔮 KONSEQUENZ-BETRACHTUNG:
+- Was sind die möglichen Auswirkungen jeder Option?
+- Wie könnten Sie sich in 1, 5, 10 Jahren fühlen?
+- Was wäre das Worst-Case-Szenario?
+
+💡 INTUITIONS-CHECK:
+- Was sagt Ihr Bauchgefühl?
+- Wovon träumen Sie heimlich?
+- Was würden Sie entscheiden, wenn Sie keine Angst hätten?
+
+🗣️ PERSPEKTIVEN-WECHSEL:
+- Was würde eine Person, die Sie respektieren, raten?
+- Welchen Rat würden Sie einem Freund in derselben Situation geben?
+
+📋 ENTSCHEIDUNGS-PROZESS:
+- Welche Informationen benötigen Sie noch?
+- Mit wem sollten Sie sprechen?
+- Wie werden Sie die Entscheidung umsetzen?
+
+Erzählen Sie mir von der Entscheidung, die Sie gerade beschäftigt.`
+    }
+];
+
+// Für Kompatibilität auch als const definieren
+const coachingTemplates = window.coachingTemplates;
+
+// Coaching-Kategorien für Filterung
+window.coachingCategories = [
+    'Zielsetzung',
+    'Problemlösung',
+    'Selbstreflexion',
+    'Produktivität',
+    'Leadership',
+    'Change',
+    'Balance',
+    'Entscheidungsfindung',
+    'Kommunikation',
+    'Motivation'
+];
+
+const coachingCategories = window.coachingCategories;
+
+// KI-Response-Templates für realistische Simulationen
+window.aiResponseTemplates = [
+    {
+        context: 'goal-setting',
+        responses: [
+            'Für eine effektive Zielsetzung empfehle ich, zunächst Ihre langfristige Vision zu klären. Beginnen Sie mit der Frage: "Wo sehe ich mich in 3 Jahren?" und arbeiten Sie dann rückwärts zu konkreten Quartalszielen.',
+            'SMART-Ziele sind ein ausgezeichneter Ansatz. Besonders wichtig ist die Messbarkeit - definieren Sie konkrete KPIs oder Meilensteine, die objektiv überprüfbar sind.',
+            'Bei der Zielsetzung sollten Sie auch mögliche Hindernisse antizipieren. Entwickeln Sie für jedes Ziel einen Plan B und identifizieren Sie die Ressourcen, die Sie benötigen.'
+        ]
+    },
+    {
+        context: 'leadership',
+        responses: [
+            'Authentische Führung beginnt mit Selbstreflexion. Führen Sie regelmäßige Selbstbewertungen durch und holen Sie sich 360-Grad-Feedback von Ihrem Team.',
+            'Effektive Kommunikation ist das Herzstück guter Führung. Praktizieren Sie aktives Zuhören und stellen Sie mehr Fragen, als Sie Antworten geben.',
+            'Entwickeln Sie Ihre emotionale Intelligenz weiter. Führungskräfte, die ihre eigenen Emotionen und die ihres Teams verstehen, sind deutlich erfolgreicher.'
+        ]
+    },
+    {
+        context: 'time-management',
+        responses: [
+            'Die Pareto-Regel (80/20) ist ein mächtiges Tool für Zeitmanagement. Identifizieren Sie die 20% Ihrer Aktivitäten, die 80% der Ergebnisse erzeugen.',
+            'Implementieren Sie Time-Blocking in Ihrem Kalender. Reservieren Sie feste Zeiten für wichtige Aufgaben und behandeln Sie diese wie unverschiebbare Termine.',
+            'Beginnen Sie jeden Tag mit der wichtigsten Aufgabe (Eat the Frog). Das schafft Momentum und verhindert Prokrastination bei kritischen Projekten.'
+        ]
+    }
+];
+
+const aiResponseTemplates = window.aiResponseTemplates;
+
+// Utility-Funktionen für Datenverarbeitung (kompatibel mit jed6wdhyg)
+window.dataUtils = {
+    // Client-Funktionen
+    getClientById: (clientId) => {
+        return clients.find(client => client.id === clientId);
     },
     
-    {
-        id: "sf_loesungsfokus",
-        title: "SF Lösungsfokussierte Intervention", 
-        category: "Solution Finder",
-        phase: 3,
-        description: "Ressourcenorientierte Lösungsentwicklung",
-        prompts: [
-            {
-                step: 1,
-                prompt: "SF1",
-                text: "Stellen Sie sich vor, Ihr Problem wäre gelöst. Woran würden Sie das merken?",
-                purpose: "Lösungsvision aktivieren"
-            },
-            {
-                step: 2,
-                prompt: "SF2",
-                text: "Was hat Ihnen in ähnlichen Situationen schon mal geholfen?",
-                purpose: "Ressourcen identifizieren"
-            },
-            {
-                step: 3,
-                prompt: "SF3", 
-                text: "Wann war das Problem schon mal weniger stark? Was war da anders?",
-                purpose: "Ausnahmen finden"
-            },
-            {
-                step: 4,
-                prompt: "SF4",
-                text: "Auf einer Skala von 1-10: Wo stehen Sie heute?",
-                purpose: "Skalierung für Fortschritt"
-            }
-        ],
-        duration: "15-25 Minuten",
-        outcome: "Konkrete Lösungsansätze und nächste Schritte"
+    getAllClients: () => {
+        return [...clients];
     },
-
-    {
-        id: "diag_emotional",
-        title: "DIAG Emotionale Diagnostik",
-        category: "Diagnostisch",
-        phase: 2,
-        description: "Systematische emotionale Befindlichkeits-Analyse",
-        prompts: [
-            {
-                step: 1,
-                prompt: "DIAG1",
-                text: "Auf einer Skala von 1-10: Wie würden Sie Ihre emotionale Verfassung einschätzen?",
-                purpose: "Emotionale Baseline"
-            },
-            {
-                step: 2,
-                prompt: "DIAG2",
-                text: "Welches Gefühl ist in dieser Situation am stärksten präsent?",
-                purpose: "Schlüsselaffekt identifizieren"
-            },
-            {
-                step: 3,
-                prompt: "DIAG3",
-                text: "Wie spüren Sie das Problem in Ihrem Körper?",
-                purpose: "Somatische Marker"
-            },
-            {
-                step: 4,
-                prompt: "DIAG4",
-                text: "Was denken Sie über sich selbst in dieser Situation?",
-                purpose: "Kognitive Muster"
-            }
-        ],
-        duration: "15-20 Minuten", 
-        outcome: "Emotionales Profil und Körperwahrnehmung geklärt"
+    
+    // Template-Funktionen
+    getTemplateById: (templateId) => {
+        return coachingTemplates.find(template => template.id === templateId);
     },
-
-    {
-        id: "loes_wunderfrage",
-        title: "LÖS Wunderfragen-Intervention",
-        category: "Lösungsorientiert",
-        phase: 3,
-        description: "Klassische lösungsorientierte Techniken nach de Shazer",
-        prompts: [
-            {
-                step: 1,
-                prompt: "LÖS1",
-                text: "Angenommen, über Nacht geschieht ein Wunder und Ihr Problem ist gelöst. Was wäre anders?",
-                purpose: "Lösungsvision kreieren"
-            },
-            {
-                step: 2, 
-                prompt: "LÖS2",
-                text: "Was wäre der kleinste Schritt, den Sie heute noch gehen könnten?",
-                purpose: "Erste konkrete Aktion"
-            },
-            {
-                step: 3,
-                prompt: "LÖS3",
-                text: "Welche Fähigkeiten, Menschen oder Hilfsmittel stehen Ihnen zur Verfügung?",
-                purpose: "Ressourcen-Mapping"
-            },
-            {
-                step: 4,
-                prompt: "LÖS4",
-                text: "Denken Sie an eine Situation, in der Sie erfolgreich waren. Was können Sie übertragen?",
-                purpose: "Erfolgs-Transfer"
-            }
-        ],
-        duration: "20-30 Minuten",
-        outcome: "Konkrete Handlungsschritte und Ressourcen-Aktivierung"
+    
+    getTemplatesByCategory: (category) => {
+        return coachingTemplates.filter(template => template.category === category);
     },
-
-    {
-        id: "meta_prozess",
-        title: "META Prozess-Reflexion",
-        category: "Meta-Coaching", 
-        phase: 0,
-        description: "Reflexion des Coaching-Prozesses und der Beziehung",
-        prompts: [
-            {
-                step: 1,
-                prompt: "META1",
-                text: "Wie erleben Sie unser Gespräch bisher? Was ist hilfreich?",
-                purpose: "Prozess-Feedback"
-            },
-            {
-                step: 2,
-                prompt: "META2", 
-                text: "Sollen wir einen anderen Ansatz versuchen?",
-                purpose: "Methodenflexibilität"
-            },
-            {
-                step: 3,
-                prompt: "META3",
-                text: "Ist das Tempo für Sie angemessen?",
-                purpose: "Tempo-Justierung"
-            },
-            {
-                step: 4,
-                prompt: "META4",
-                text: "Wie geht es Ihnen mit mir als Coach?",
-                purpose: "Beziehungsklärung"
-            }
-        ],
-        duration: "10-15 Minuten",
-        outcome: "Optimierter Coaching-Prozess und gestärkte Arbeitsbeziehung"
+    
+    searchTemplates: (searchTerm) => {
+        const term = searchTerm.toLowerCase();
+        return coachingTemplates.filter(template => 
+            template.title.toLowerCase().includes(term) ||
+            template.description.toLowerCase().includes(term) ||
+            template.category.toLowerCase().includes(term)
+        );
     },
-
-    {
-        id: "spannungsfeld_avatar",
-        title: "Spannungsfeld Avatar-Aufstellung",
-        category: "Systemisch",
-        phase: 2,
-        description: "Visualisierung von Spannungsfeldern durch Avatar-Arbeit",
-        prompts: [
-            {
-                step: 1,
-                prompt: "GT4",
-                text: "Zwischen welchen Polen bewegen Sie sich?",
-                purpose: "Spannungsfeld identifizieren"
-            },
-            {
-                step: 2,
-                prompt: "AVATAR1",
-                text: "Wenn Sie die eine Seite als Person darstellen würden, wie würde sie aussehen?",
-                purpose: "Pol A personifizieren"
-            },
-            {
-                step: 3,
-                prompt: "AVATAR2", 
-                text: "Und die andere Seite? Welche Eigenschaften hat diese Person?",
-                purpose: "Pol B personifizieren"
-            },
-            {
-                step: 4,
-                prompt: "AVATAR3",
-                text: "Was würden diese beiden Personen zueinander sagen?",
-                purpose: "Dialog zwischen Polen"
-            }
-        ],
-        duration: "25-35 Minuten",
-        outcome: "Visualisiertes Spannungsfeld und Lösungsansätze",
-        tools: ["DelightEx Avatar Tool"]
-    },
-
-    {
-        id: "live_digital",
-        title: "LIVE Digital Coaching Setup",
-        category: "Online-Coaching",
-        phase: 1,
-        description: "Spezielle Techniken für digitales Coaching",
-        prompts: [
-            {
-                step: 1,
-                prompt: "LIVE1",
-                text: "Wie geht es Ihnen mit der digitalen Gesprächssituation?",
-                purpose: "Digitaler Rapport"
-            },
-            {
-                step: 2,
-                prompt: "LIVE2",
-                text: "Haben Sie einen ruhigen Ort für unser Gespräch?",
-                purpose: "Setting klären"
-            },
-            {
-                step: 3,
-                prompt: "LIVE3",
-                text: "Können Sie mich gut sehen und hören?",
-                purpose: "Technische Verbindung"
-            },
-            {
-                step: 4,
-                prompt: "GT1",
-                text: "Was beschäftigt Sie denn gerade?",
-                purpose: "Inhaltlicher Einstieg"
-            }
-        ],
-        duration: "5-10 Minuten Vorbereitung",
-        outcome: "Optimale digitale Coaching-Umgebung"
-    },
-
-    {
-        id: "notfall_intervention",
-        title: "NOTFALL Krisenintervention",
-        category: "Notfall",
-        phase: 0,
-        description: "Stabilisierung bei akuten Belastungen",
-        prompts: [
-            {
-                step: 1,
-                prompt: "NOTFALL1",
-                text: "Ich merke, dass Sie sehr aufgewühlt sind. Was brauchen Sie jetzt am meisten?",
-                purpose: "Akute Stabilisierung"
-            },
-            {
-                step: 2,
-                prompt: "NOTFALL2",
-                text: "Können Sie mir auf einer Skala von 1-10 sagen, wie belastet Sie sich fühlen?",
-                purpose: "Belastungsgrad einschätzen"
-            },
-            {
-                step: 3,
-                prompt: "NOTFALL3",
-                text: "Haben Sie jemanden, der Sie unterstützen kann?",
-                purpose: "Unterstützungssystem"
-            },
-            {
-                step: 4,
-                prompt: "NOTFALL4",
-                text: "Sollen wir professionelle Hilfe einbeziehen?",
-                purpose: "Weitere Schritte"
-            }
-        ],
-        duration: "10-20 Minuten",
-        outcome: "Stabilisierung und Weitervermittlung wenn nötig",
-        warning: "Bei Suizidgefahr sofort professionelle Hilfe einbeziehen!"
-    }
-];
-
-// SPANNUNGSFELDER-DATENBANK (vereinfacht)
-const spannungsfelder = [
-    {
-        id: "autonomie_verbindung",
-        name: "Autonomie ↔ Verbindung",
-        description: "Spannung zwischen Selbstständigkeit und Zugehörigkeit",
-        keywords: ["unabhängig", "team", "allein", "gruppe", "selbstständig", "verbunden"],
-        interventions: ["GT4", "AVATAR1", "LÖS1"],
-        typicalContexts: ["Führung", "Partnerschaft", "Karriere"]
-    },
-    {
-        id: "kontrolle_loslassen", 
-        name: "Kontrolle ↔ Loslassen",
-        description: "Spannung zwischen Steuerung und Vertrauen",
-        keywords: ["kontrolle", "loslassen", "steuerung", "vertrauen", "sicherheit", "flexibilität"],
-        interventions: ["GT4", "DIAG2", "LÖS3"],
-        typicalContexts: ["Management", "Delegation", "Veränderung"]
-    },
-    {
-        id: "leistung_entspannung",
-        name: "Leistung ↔ Entspannung", 
-        description: "Spannung zwischen Anstrengung und Erholung",
-        keywords: ["leistung", "entspannung", "stress", "ruhe", "arbeit", "pause"],
-        interventions: ["GT4", "DIAG1", "LÖS2"],
-        typicalContexts: ["Work-Life-Balance", "Burnout-Prävention", "Zeitmanagement"]
-    },
-    {
-        id: "naehe_distanz",
-        name: "Nähe ↔ Distanz",
-        description: "Spannung zwischen Intimität und Abgrenzung", 
-        keywords: ["nähe", "distanz", "abgrenzung", "intimität", "grenzen", "verbindung"],
-        interventions: ["GT4", "DIAG3", "AVATAR1"],
-        typicalContexts: ["Beziehungen", "Teamführung", "Kommunikation"]
-    },
-    {
-        id: "struktur_spontanitaet",
-        name: "Struktur ↔ Spontaneität",
-        description: "Spannung zwischen Planung und Flexibilität",
-        keywords: ["struktur", "spontaneität", "planung", "flexibilität", "routine", "überraschung"],
-        interventions: ["GT4", "SF4", "LÖS1"],
-        typicalContexts: ["Projektmanagement", "Kreativität", "Organisation"]
-    }
-];
-
-// COACHING METHODEN & TOOLS
-const coachingMethods = [
-    {
-        id: "avatar_aufstellung",
-        name: "Avatar-Aufstellung",
-        description: "3D-Visualisierung von Spannungsfeldern und Systemen",
-        tool: "DelightEx (ehemals CoSpaces)",
-        url: "https://www.delightex.com",
-        bestFor: ["Spannungsfelder", "Systemaufstellungen", "Inneres Team"],
-        duration: "15-30 Minuten",
-        phase: [2, 3]
-    },
-    {
-        id: "skalierung",
-        name: "Skalierungsfragen",
-        description: "Messbarkeit von subjektiven Zuständen",
-        tool: "Verbal",
-        bestFor: ["Fortschrittsmessung", "Problemintensität", "Zielerreichung"],
-        duration: "5-10 Minuten",
-        phase: [2, 3, 4]
-    },
-    {
-        id: "wunderfrage",
-        name: "Wunderfrage",
-        description: "Lösungsorientierte Imagination nach de Shazer",
-        tool: "Verbal",
-        bestFor: ["Lösungsvision", "Kreativität", "Perspektivenwechsel"],
-        duration: "10-20 Minuten", 
-        phase: [3]
-    },
-    {
-        id: "ressourcen_mapping",
-        name: "Ressourcen-Mapping",
-        description: "Systematische Erfassung verfügbarer Stärken",
-        tool: "Visuell/Digital",
-        bestFor: ["Stärkenaktivierung", "Selbstvertrauen", "Lösungsentwicklung"],
-        duration: "15-25 Minuten",
-        phase: [3]
-    },
-    {
-        id: "timeline_arbeit",
-        name: "Timeline-Arbeit", 
-        description: "Zeitliche Perspektive auf Vergangenheit und Zukunft",
-        tool: "Visuell",
-        bestFor: ["Zielsetzung", "Traumabearbeitung", "Zukunftsplanung"],
-        duration: "20-40 Minuten",
-        phase: [3, 4]
-    }
-];
-
-// EXPORT für globale Verfügbarkeit
-window.clients = clients;
-window.coachingTemplates = coachingTemplates; 
-window.spannungsfelder = spannungsfelder;
-window.coachingMethods = coachingMethods;
-
-// HILFSFUNKTIONEN
-window.findClientById = function(id) {
-    return clients.find(client => client.id === id);
-};
-
-window.findTemplateById = function(id) {
-    return coachingTemplates.find(template => template.id === id);
-};
-
-window.detectSpannungsfeld = function(text) {
-    const textLower = text.toLowerCase();
-    return spannungsfelder.find(sf => 
-        sf.keywords.some(keyword => textLower.includes(keyword))
-    );
-};
-
-window.getMethodsForPhase = function(phase) {
-    return coachingMethods.filter(method => 
-        method.phase.includes(phase)
-    );
-};
-
-window.getPromptsForCategory = function(category) {
-    return Object.values(prompts).filter(prompt => 
-        prompt.category === category
-    );
-};
-
-// CONSOLE OUTPUT
-console.log('📋 Data.js geladen:');
-console.log(`👥 Clients: ${clients.length}`);
-console.log(`📝 Templates: ${coachingTemplates.length}`);
-console.log(`⚖️ Spannungsfelder: ${spannungsfelder.length}`);
-console.log(`🛠️ Methoden: ${coachingMethods.length}`);
-console.log('✅ Coaching-Datenbank bereit!');
+    
+    // AI-Response-Funktionen
+    getRandomAIResponse: (context = 'general') => {
+        const contextResponses = aiResponseTemplates.find(t => t.context === context);
+        if (contextResponses) {
+            const responses = contextResponses.responses;
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+        
+        // Fallback für allgemeine Antworten
+        const generalResponses = [
+            'Das ist ein sehr guter Ansatz. Lassen Sie uns das weiter vertiefen und konkrete Schritte entwickeln.',
+            'Ihre Reflexion zeigt bereits viel Selbstbewusstsein. Welche Erkenntnisse sind für Sie besonders relevant?',
+            'Diese Herausforderung bietet auch Chancen für Wachstum. Was könnten die positiven Aspekte sein?

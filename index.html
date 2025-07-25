@@ -3,141 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coach Mission Control - Triadisches KI-Coaching</title>
+    <title>Coach Mission Control - KI-Coaching App</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="main-container">
-        <!-- COACH CONTROL PANEL -->
-        <div class="coach-panel">
-            <h2>🎯 Coach Control</h2>
-            
-            <!-- CLIENT INFO -->
-            <div class="client-info">
-                <div class="client-avatar">MS</div>
-                <strong id="currentClient">Marcus Schmidt</strong>
-                <div style="font-size: 12px; margin-top: 5px;">Vertriebsleiter • Session aktiv</div>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <div class="nav-brand">
+                <h1>🎯 Coach Mission Control</h1>
+                <p class="tagline">Triadisches Coaching: Coach + Klient + KI</p>
             </div>
+            <ul class="nav-links">
+                <li><a href="#clients" class="nav-link active">Klienten</a></li>
+                <li><a href="#coaching" class="nav-link">Coaching</a></li>
+                <li><a href="#collaboration" class="nav-link">Kollaboration</a></li>
+                <li><a href="#templates" class="nav-link">Templates</a></li>
+            </ul>
+        </nav>
 
-            <!-- 12-PHASEN NAVIGATION -->
-            <div class="phases-section">
-                <h3 style="margin-bottom: 15px; font-size: 14px;">📋 12-Phasen Coaching</h3>
-                
-                <div class="phase-card active" data-phase="1">
-                    <div class="phase-title">Phase 1: Erstanliegen (GT1-GT4)</div>
-                    <div class="phase-steps">Smalltalk → Problem → Ziel → Spannungsfeld</div>
-                </div>
-                
-                <div class="phase-card" data-phase="2">
-                    <div class="phase-title">Phase 2: Problemanalyse (GT5-GT7)</div>
-                    <div class="phase-steps">Situationsanalyse → Verhalten → Kontext</div>
-                </div>
-                
-                <div class="phase-card" data-phase="3">
-                    <div class="phase-title">Phase 3: Lösungsstrategie (GT8-GT11)</div>
-                    <div class="phase-steps">Optionen → Ressourcen → Plan → Commitment</div>
-                </div>
-                
-                <div class="phase-card" data-phase="4">
-                    <div class="phase-title">Phase 4: Umsetzung (GT12)</div>
-                    <div class="phase-steps">Transfer → Zusammenfassung → Abschluss</div>
-                </div>
-            </div>
-
-            <!-- PROMPT REPOSITORY -->
-            <div>
-                <h3 style="margin-bottom: 15px; font-size: 14px;">🔍 Prompt Repository</h3>
-                
-                <input type="text" class="prompt-search" placeholder="Suche nach Prompts... (z.B. GT1, Spannungsfeld, Avatar)" id="promptSearch">
-                
-                <div class="prompt-categories">
-                    <button class="category-btn active" data-category="all">Alle</button>
-                    <button class="category-btn" data-category="GT">GT</button>
-                    <button class="category-btn" data-category="SF">SF</button>
-                    <button class="category-btn" data-category="DIAG">DIAG</button>
-                    <button class="category-btn" data-category="LÖS">LÖS</button>
-                    <button class="category-btn" data-category="META">META</button>
-                </div>
-                
-                <div class="prompt-list" id="promptList">
-                    <!-- Prompts werden hier dynamisch geladen -->
-                </div>
+        <!-- Demo Notice -->
+        <div class="demo-notice">
+            <p>🚀 <strong>Triadisches KI-Coaching Framework</strong></p>
+            <div class="demo-features">
+                <span>📝 12-Phasen Coaching nach Geißler</span>
+                <span>🔍 GT/SF/DIAG/LÖS/META Prompts</span>
+                <span>🤝 Coach-Coachee-KI Kollaboration</span>
+                <span>🎭 Avatar-Aufstellungen</span>
             </div>
         </div>
 
-        <!-- KOLLABORATION FENSTER -->
-        <div class="collaboration-panel">
-            <div class="collaboration-header">
-                <div>
-                    <div class="collaboration-title">🤝 Kollaboration</div>
-                    <div class="session-info">Coaching Session mit Marcus Schmidt</div>
+        <!-- Client Selection Section -->
+        <section id="clients" class="section">
+            <div class="section-header">
+                <h2>🧑‍💼 Klienten-Auswahl</h2>
+                <p>Wählen Sie einen Klienten und starten Sie eine triadische Coaching-Session!</p>
+            </div>
+
+            <div class="client-selection">
+                <!-- Client Grid - MUSS diese ID haben -->
+                <div id="clientGrid" class="client-grid">
+                    <!-- Clients werden dynamisch geladen -->
                 </div>
-                <div>
-                    <button onclick="window.open('https://www.delightex.com', '_blank')" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
-                        🎭 Avatar Tool
+
+                <!-- Selected Client Display -->
+                <div id="selectedClientDisplay" class="selected-client" style="display: none;">
+                    <!-- Selected client info wird hier angezeigt -->
+                </div>
+
+                <!-- Session Controls -->
+                <div class="session-controls">
+                    <button id="startSessionBtn" class="btn-primary btn-large">
+                        🎯 Session starten
                     </button>
+                    <button id="stopSessionBtn" class="btn-danger btn-large" style="display: none;">
+                        ⏹️ Session beenden
+                    </button>
+                    <div id="sessionTimer" class="session-timer" style="display: none;">
+                        00:00
+                    </div>
                 </div>
             </div>
-            
-            <div class="collaboration-content">
-                <div class="message-thread" id="messageThread">
-                    <div class="message coach-prompt">
-                        <div class="message-header">
-                            <span class="message-sender">👨‍💼 Coach</span>
-                            <span class="message-time">10:15</span>
+        </section>
+
+        <!-- COACHING SECTION - ERWEITERT MIT TRIADISCHER STRUKTUR -->
+        <section id="coaching" class="section" style="display: none;">
+            <div class="coaching-container">
+                <!-- COACH CONTROL PANEL -->
+                <div class="coach-panel">
+                    <div class="panel-header">
+                        <h2>🎯 Coach Control Panel</h2>
+                        <p>Nur für Coach sichtbar</p>
+                    </div>
+
+                    <!-- 12-PHASEN NAVIGATION -->
+                    <div class="phases-section">
+                        <h3>📋 12-Phasen Coaching</h3>
+                        <div class="phase-cards">
+                            <div class="phase-card active" data-phase="1">
+                                <div class="phase-title">Phase 1: Erstanliegen (GT1-GT4)</div>
+                                <div class="phase-steps">Smalltalk → Problem → Ziel → Spannungsfeld</div>
+                            </div>
+                            <div class="phase-card" data-phase="2">
+                                <div class="phase-title">Phase 2: Problemanalyse (GT5-GT7)</div>
+                                <div class="phase-steps">Situationsanalyse → Verhalten → Kontext</div>
+                            </div>
+                            <div class="phase-card" data-phase="3">
+                                <div class="phase-title">Phase 3: Lösungsstrategie (GT8-GT11)</div>
+                                <div class="phase-steps">Optionen → Ressourcen → Plan → Commitment</div>
+                            </div>
+                            <div class="phase-card" data-phase="4">
+                                <div class="phase-title">Phase 4: Umsetzung (GT12)</div>
+                                <div class="phase-steps">Transfer → Zusammenfassung → Abschluss</div>
+                            </div>
                         </div>
-                        <div class="message-content">
-                            Herzlich willkommen Marcus! Schön, dass wir uns heute die Zeit für ein Coaching nehmen können. Wie geht es Ihnen denn gerade?
+                    </div>
+
+                    <!-- PROMPT REPOSITORY -->
+                    <div class="prompt-repository">
+                        <h3>🔍 Prompt Repository</h3>
+                        
+                        <input type="text" id="promptSearch" class="prompt-search" placeholder="Suche: GT1, Spannungsfeld, Avatar...">
+                        
+                        <div class="prompt-categories">
+                            <button class="category-btn active" data-category="all">Alle</button>
+                            <button class="category-btn" data-category="GT">GT</button>
+                            <button class="category-btn" data-category="SF">SF</button>
+                            <button class="category-btn" data-category="DIAG">DIAG</button>
+                            <button class="category-btn" data-category="LÖS">LÖS</button>
+                            <button class="category-btn" data-category="META">META</button>
                         </div>
+                        
+                        <div id="promptList" class="prompt-list">
+                            <!-- Prompts werden hier dynamisch geladen -->
+                        </div>
+                    </div>
+
+                    <!-- COACH KI ASSISTANT -->
+                    <div class="coach-ai-section">
+                        <h3>🤖 Coach-KI Assistant</h3>
+                        <p class="ai-description">Private KI-Beratung (nur für Coach)</p>
+                        
+                        <div id="coachAIChat" class="coach-ai-chat">
+                            <div class="ai-welcome">
+                                💡 Fragen Sie mich zu Prozess, Tools, Methoden, Spannungsfeldern...
+                            </div>
+                        </div>
+                        
+                        <div class="ai-input-section">
+                            <textarea id="coachAIInput" placeholder="Frage an KI-Assistant..." rows="2"></textarea>
+                            <button id="sendAIQuery" class="btn-secondary">💬 Fragen</button>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <button onclick="getProcessAdvice()" class="quick-btn">📊 Prozess</button>
+                            <button onclick="getMethodSuggestion()" class="quick-btn">🛠️ Methoden</button>
+                            <button onclick="analyzeSpannungsfeld()" class="quick-btn">⚖️ Spannungsfeld</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROMPT EDITOR -->
+                <div class="prompt-editor-section">
+                    <div class="editor-header">
+                        <h3>✏️ Prompt Editor</h3>
+                        <div class="current-phase" id="currentPhaseDisplay">Phase 1: Erstanliegen</div>
                     </div>
                     
-                    <div class="message ai-response">
-                        <div class="message-header">
-                            <span class="message-sender">🤖 KI-Assistant</span>
-                            <span class="message-time">10:16</span>
-                        </div>
-                        <div class="message-content">
-                            <strong>Analyse:</strong> Smalltalk-Phase erfolgreich eingeleitet. Rapport-Aufbau durch offene Begrüßung und Interesse am aktuellen Befinden.
-                            <br><br>
-                            <strong>Nächste Schritte:</strong> GT1 - Erstanliegen explorieren nach positiver Resonanz des Coachees.
-                        </div>
+                    <textarea id="promptEditor" class="prompt-editor" placeholder="Erstellen Sie Ihren Coaching-Prompt hier..."></textarea>
+                    
+                    <div class="editor-actions">
+                        <button id="sendToCollaborationBtn" class="btn-primary btn-large">
+                            📤 An Coachee senden
+                        </button>
+                        <button onclick="openAvatarTool()" class="btn-avatar">
+                            🎭 Avatar Tool (DelightEx)
+                        </button>
+                        <button id="exportPromptBtn" class="btn-secondary">
+                            📄 Exportieren
+                        </button>
+                    </div>
+
+                    <div class="shortcuts-info">
+                        <small>⌨️ Shortcuts: Ctrl+1-9 für GT1-GT9 | Ctrl+Enter für Senden</small>
                     </div>
                 </div>
             </div>
-            
-            <div class="status-bar">
-                <div class="phase-indicator" id="phaseIndicator">Phase 1: Erstanliegen</div>
-                <div class="session-timer" id="sessionTimer">00:15:32</div>
-            </div>
-        </div>
+        </section>
 
-        <!-- COACH KI FENSTER -->
-        <div class="coach-ai-panel">
-            <h3>🤖 Coach-KI Assistant</h3>
-            
-            <div class="ai-chat" id="coachAIChat">
-                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
-                    Private KI-Beratung (nur für Coach sichtbar)
-                </div>
-                <div style="background: #475569; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
-                    💡 <strong>Prozess-Tipp:</strong> Marcus zeigt offene Körperhaltung. Guter Zeitpunkt für GT1 (Erstanliegen).
-                </div>
-            </div>
-            
-            <textarea class="ai-input" placeholder="Frage an KI-Assistant..." rows="3" id="coachAIInput"></textarea>
-            <button class="ai-send-btn" onclick="sendCoachAIQuery()">💬 Anfragen</button>
-            
-            <div style="margin-top: 20px; font-size: 12px;">
-                <strong>Quick Actions:</strong>
-                <div style="margin-top: 10px;">
-                    <button onclick="getProcessAdvice()" style="background: #6366f1; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin: 2px; font-size: 10px; cursor: pointer;">Prozess-Beratung</button>
-                    <button onclick="getMethodSuggestion()" style="background: #8b5cf6; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin: 2px; font-size: 10px; cursor: pointer;">Methoden-Tipp</button>
-                    <button onclick="analyzeClient()" style="background: #f59e0b; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin: 2px; font-size: 10px; cursor: pointer;">Klient-Analyse</button>
+        <!-- KOLLABORATION SECTION -->
+        <section id="collaboration" class="section" style="display: none;">
+            <div class="section-header">
+                <h2>🤝 Kollaborations-Interface</h2>
+                <p>Hier sehen Coach und Coachee die freigegebenen Prompts und KI-Antworten</p>
+                <div class="collaboration-info">
+                    <span class="info-tag">👨‍💼 Coach sichtbar</span>
+                    <span class="info-tag">👤 Coachee sichtbar</span>
+                    <span class="info-tag">🔗 Link-sharing möglich</span>
                 </div>
             </div>
+
+            <div id="collaborationInterface" class="collaboration-interface">
+                <div id="collaborationDisplay" class="collaboration-display">
+                    <div class="waiting-message">
+                        <p>⏳ Warten auf Coaching-Prompt...</p>
+                        <small>Senden Sie einen Prompt aus dem Coaching-Bereich, um die Kollaboration zu starten.</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Template Library Section -->
+        <section id="templates" class="section" style="display: none;">
+            <div class="section-header">
+                <h2>📚 Template-Bibliothek</h2>
+                <p>Professionelle Coaching-Templates basierend auf wissenschaftlichen Standards</p>
+            </div>
+
+            <div class="template-search-section">
+                <input type="text" id="templateSearch" placeholder="Templates durchsuchen...">
+                <select id="categoryFilter">
+                    <option value="">Alle Kategorien</option>
+                    <option value="Zielsetzung">Zielsetzung</option>
+                    <option value="Problemlösung">Problemlösung</option>
+                    <option value="Leadership">Leadership</option>
+                    <option value="Change">Change Management</option>
+                </select>
+            </div>
+
+            <div id="templateContainer" class="template-container">
+                <!-- Templates werden dynamisch geladen -->
+            </div>
+        </section>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel" style="position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;">
+            <div id="debugInfo">App lädt...</div>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
