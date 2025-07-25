@@ -1,687 +1,768 @@
-// KI-Coaching App - SYNTAX-FEHLER BEHOBEN
-// Vollständige app.js ohne Unexpected EOF
-// Datum: 26. Juli 2025
+// Globale Variablen
+let currentClient = null;
+let sessionActive = false;
+let sessionTimer = null;
+let sessionDuration = 0;
+let currentPhase = 1;
+let collaborationData = [];
 
-// === PROMPT DATABASE (GT/SF/DIAG/LÖS/META) ===
-const prompts = {
-    // Geißler Triadisch (GT1-GT12)
-    GT1: {
-        shortcut: "GT1",
-        title: "Erstanliegen explorieren",
-        category: "GT",
-        phase: 1,
-        content: "Was beschäftigt Sie denn gerade? Womit kann ich Ihnen heute helfen?",
-        description: "Offene Frage zur Exploration des Anliegens"
+// Notfall-Klienten falls data.js nicht lädt
+const fallbackClients = [
+    {
+        id: 'sarah',
+        name: 'Sarah Müller',
+        role: 'Projektmanagerin',
+        avatar: '👩‍💼',
+        lastSession: '2024-01-20',
+        totalSessions: 12,
+        currentGoal: 'Work-Life-Balance verbessern',
+        status: 'aktiv'
     },
-    GT2: {
-        shortcut: "GT2", 
-        title: "Problem konkretisieren",
-        category: "GT",
-        phase: 1,
-        content: "Können Sie mir das Problem noch etwas genauer beschreiben? Was genau bereitet Ihnen Schwierigkeiten?",
-        description: "Problemspezifizierung und Konkretisierung"
+    {
+        id: 'marcus', 
+        name: 'Marcus Schmidt',
+        role: 'Vertriebsleiter',
+        avatar: '👨‍💼',
+        lastSession: '2024-01-18',
+        totalSessions: 8,
+        currentGoal: 'Führungskompetenz stärken',
+        status: 'aktiv'
     },
-    GT3: {
-        shortcut: "GT3",
-        title: "Ziel definieren", 
-        category: "GT",
-        phase: 1,
-        content: "Was wäre Ihr Wunschzustand? Wie sähe eine gute Lösung für Sie aus?",
-        description: "Zielexploration und Lösungsvision"
+    {
+        id: 'lisa',
+        name: 'Lisa Weber', 
+        role: 'Marketing-Direktorin',
+        avatar: '👩‍🎨',
+        lastSession: '2024-01-15',
+        totalSessions: 15,
+        currentGoal: 'Kreativität und Innovation fördern',
+        status: 'aktiv'
     },
-    GT4: {
-        shortcut: "GT4",
-        title: "Spannungsfeld identifizieren",
-        category: "GT", 
-        phase: 1,
-        content: "Zwischen welchen Polen bewegen Sie sich? Was steht sich da gegenüber?",
-        description: "Ausbalancierungsproblem erkennen"
-    },
-    SF1: {
-        shortcut: "SF1",
-        title: "Lösungsorientierter Einstieg",
-        category: "SF",
-        phase: 1,
-        content: "Stellen Sie sich vor, Ihr Problem wäre gelöst. Woran würden Sie das merken?",
-        description: "Lösungsfokussierte Perspektive"
-    },
-    DIAG1: {
-        shortcut: "DIAG1",
-        title: "Emotionale Befindlichkeit",
-        category: "DIAG",
-        phase: 2,
-        content: "Auf einer Skala von 1-10: Wie würden Sie Ihre aktuelle emotionale Verfassung einschätzen?",
-        description: "Skalierung emotionaler Zustand"
-    },
-    LÖS1: {
-        shortcut: "LÖS1",
-        title: "Wunderfrage",
-        category: "LÖS",
-        phase: 3,
-        content: "Angenommen, über Nacht geschieht ein Wunder und Ihr Problem ist gelöst. Was wäre anders?",
-        description: "Klassische Wunderfrage nach de Shazer"
-    },
-    META1: {
-        shortcut: "META1",
-        title: "Prozess-Check",
-        category: "META",
-        phase: 0,
-        content: "Wie erleben Sie unser Gespräch bisher? Was ist hilfreich für Sie?",
-        description: "Zwischenbilanz des Coaching-Prozesses"
+    {
+        id: 'werner',
+        name: 'Werner Hoffmann',
+        role: 'IT-Leiter',
+        avatar: '👨‍💻',
+        lastSession: '2024-01-22', 
+        totalSessions: 6,
+        currentGoal: 'Stressmanagement und Delegation',
+        status: 'aktiv'
     }
-};
+];
 
-// === GLOBALE VARIABLEN ===
-let currentState = {
-    selectedClient: null,
-    sessionActive: false,
-    sessionStartTime: null,
-    currentTemplate: null,
-    currentPhase: 1,
-    collaborationMode: false,
-    collaborationData: null
-};
-
-let collaborationProtection = {
-    isProtected: false,
-    protectedData: null,
-    lastUpdate: 0
-};
-
-let activeCategory = "all";
-
-// === INITIALIZATION ===
+// Initialisierung
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 KI-Coaching App wird initialisiert...');
-    updateDebugInfo('App wird initialisiert...');
     
-    // Vereinfachte Initialisierung ohne mehrfache Versuche
-    if (typeof clients !== 'undefined' && Array.isArray(clients)) {
-        initializeApp();
-    } else {
-        console.error('❌ KRITISCH: clients Array nicht verfügbar');
-        updateDebugInfo('❌ FEHLER: clients Array fehlt');
-        
-        // Notfall-Clients definieren
-        window.clients = [
-            {
-                id: 'marcus',
-                name: 'Marcus Schmidt',
-                role: 'Vertriebsleiter',
-                company: 'Innovation Corp',
-                avatar: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="#3b82f6"/><text x="30" y="35" text-anchor="middle" font-size="20" fill="white">MS</text></svg>'
-            }
-        ];
-        
-        setTimeout(() => {
-            initializeApp();
-        }, 500);
-    }
+    // Daten-Validierung mit Fallback
+    validateData();
+    
+    // UI initialisieren
+    initializeApp();
+    
+    // Event Listeners einrichten
+    setupEventListeners();
+    
+    console.log('✅ Triadisches KI-Coaching App vollständig geladen - ECHTE GT1-GT12 PROMPTS');
 });
 
+function validateData() {
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    function checkData() {
+        attempts++;
+        
+        // Clients prüfen
+        if (!window.clients || !Array.isArray(window.clients) || window.clients.length === 0) {
+            if (attempts < maxAttempts) {
+                console.log(`Warte auf Daten... Versuch ${attempts}/${maxAttempts}`);
+                setTimeout(checkData, 100);
+                return;
+            } else {
+                console.log('⚠️ Fallback: Verwende integrierte Klienten-Daten');
+                window.clients = fallbackClients;
+            }
+        }
+        
+        // Prompts prüfen
+        if (!window.prompts || Object.keys(window.prompts).length === 0) {
+            console.log('⚠️ Prompts nicht verfügbar - verwende Notfall-System');
+        }
+        
+        console.log(`✅ Clients Array verfügbar: ${window.clients?.length || 0} Klienten`);
+        console.log(`🔍 Prompts verfügbar: ${Object.keys(window.prompts || {}).length}`);
+        console.log(`✅ ${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts geladen`);
+    }
+    
+    checkData();
+}
+
 function initializeApp() {
-    console.log('📋 App-Initialisierung gestartet');
-    updateDebugInfo('App-Initialisierung läuft...');
-    
-    // Ensure clients array exists
-    if (!window.clients || !Array.isArray(window.clients)) {
-        window.clients = [
-            {
-                id: 'marcus',
-                name: 'Marcus Schmidt',
-                role: 'Vertriebsleiter', 
-                company: 'Innovation Corp',
-                avatar: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="#3b82f6"/><text x="30" y="35" text-anchor="middle" font-size="20" fill="white">MS</text></svg>'
-            }
-        ];
-    }
-    
-    // Make clients globally available
-    if (typeof clients === 'undefined') {
-        window.clients = window.clients || [];
-    }
-    
-    console.log('✅ Clients Array verfügbar:', window.clients.length, 'Klienten');
-    console.log('🔍 Prompts verfügbar:', Object.keys(prompts).length);
-    updateDebugInfo(`✅ ${window.clients.length} Klienten + ${Object.keys(prompts).length} Prompts geladen`);
-    
-    // Initialize components
-    loadClients();
-    loadTemplates();
-    loadPrompts();
-    restoreSessionState();
-    setupEventListeners();
-    startCollaborationMonitoring();
-    
-    updateDebugInfo('✅ App vollständig geladen');
-    showNotification('Triadisches KI-Coaching bereit!', 'success');
+    renderClientsOverview();
+    renderPhases();
+    renderPrompts();
+    initializeCollaboration();
 }
 
-function updateDebugInfo(message) {
-    const debugElement = document.getElementById('debugInfo');
-    if (debugElement) {
-        debugElement.textContent = message;
-    }
-    console.log('DEBUG:', message);
-}
-
-// === CLIENT MANAGEMENT ===
-function loadClients() {
-    const clientGrid = document.getElementById('clientGrid');
-    if (!clientGrid) {
-        console.error('❌ clientGrid Element nicht gefunden');
-        return;
-    }
-    
-    const clientsToUse = window.clients || [];
-    console.log('👥 Lade', clientsToUse.length, 'Klienten...');
-    clientGrid.innerHTML = '';
-    
-    if (clientsToUse.length === 0) {
-        clientGrid.innerHTML = '<p>Keine Klienten verfügbar. Laden Sie data.js.</p>';
-        return;
-    }
-    
-    clientsToUse.forEach(client => {
-        const clientCard = createClientCard(client);
-        clientGrid.appendChild(clientCard);
-    });
-    
-    console.log('✅ Klienten erfolgreich geladen');
-}
-
-function createClientCard(client) {
-    const card = document.createElement('div');
-    card.className = 'client-card';
-    card.addEventListener('click', () => selectClient(client.id));
-    
-    card.innerHTML = `
-        <div class="client-avatar">
-            <img src="${client.avatar}" alt="${client.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-        </div>
-        <h3>${client.name}</h3>
-        <p class="client-role">${client.role}</p>
-        <p class="client-info">${client.company}</p>
-        <button class="btn-primary">Auswählen</button>
-    `;
-    
-    return card;
-}
-
-function selectClient(clientId) {
-    console.log('👤 Klient wird ausgewählt:', clientId);
-    
-    const clientsToUse = window.clients || [];
-    const client = clientsToUse.find(c => c.id === clientId);
-    
-    if (!client) {
-        console.error('❌ Klient nicht gefunden:', clientId);
-        showNotification('Klient konnte nicht gefunden werden', 'error');
-        return;
-    }
-    
-    console.log('✅ Klient erfolgreich ausgewählt:', client.name);
-    currentState.selectedClient = client;
-    
-    // UI Updates
-    document.querySelectorAll('.client-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    
-    // Find and select clicked card
-    const allCards = document.querySelectorAll('.client-card');
-    allCards.forEach(card => {
-        if (card.querySelector('h3').textContent === client.name) {
-            card.classList.add('selected');
-        }
-    });
-    
-    showNotification(`Klient ${client.name} ausgewählt`, 'success');
-}
-
-// === SESSION MANAGEMENT ===
-function startSession() {
-    if (!currentState.selectedClient) {
-        alert('Bitte wählen Sie zuerst einen Klienten aus.');
-        return;
-    }
-    
-    console.log('🎯 Session gestartet für:', currentState.selectedClient.name);
-    currentState.sessionActive = true;
-    currentState.sessionStartTime = new Date();
-    
-    updateSessionUI();
-    startSessionTimer();
-    
-    showNotification(`Session mit ${currentState.selectedClient.name} gestartet`, 'success');
-}
-
-function stopSession() {
-    console.log('⏹️ Session beendet');
-    currentState.sessionActive = false;
-    currentState.sessionStartTime = null;
-    
-    updateSessionUI();
-    showNotification('Session beendet', 'info');
-}
-
-function updateSessionUI() {
-    const startBtn = document.getElementById('startSessionBtn');
-    const stopBtn = document.getElementById('stopSessionBtn');
-    const timer = document.getElementById('sessionTimer');
-    
-    if (currentState.sessionActive) {
-        if (startBtn) startBtn.style.display = 'none';
-        if (stopBtn) stopBtn.style.display = 'inline-block';
-        if (timer) timer.style.display = 'block';
-    } else {
-        if (startBtn) startBtn.style.display = 'inline-block';
-        if (stopBtn) stopBtn.style.display = 'none';
-        if (timer) timer.style.display = 'none';
-    }
-}
-
-function startSessionTimer() {
-    if (!currentState.sessionActive) return;
-    
-    const timer = document.getElementById('sessionTimer');
-    if (!timer) return;
-    
-    const updateTimer = () => {
-        if (!currentState.sessionActive || !currentState.sessionStartTime) return;
-        
-        const now = new Date();
-        const elapsed = Math.floor((now - currentState.sessionStartTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        
-        timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-    
-    updateTimer();
-    const interval = setInterval(() => {
-        if (!currentState.sessionActive) {
-            clearInterval(interval);
-            return;
-        }
-        updateTimer();
-    }, 1000);
-}
-
-// === PROMPT MANAGEMENT ===
-function loadPrompts(category = 'all', searchTerm = '') {
-    const promptList = document.getElementById('promptList');
-    if (!promptList) return;
-    
-    promptList.innerHTML = '';
-
-    const filteredPrompts = Object.values(prompts).filter(prompt => {
-        const matchesCategory = category === 'all' || prompt.category === category;
-        const matchesSearch = searchTerm === '' || 
-            prompt.shortcut.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prompt.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prompt.content.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        return matchesCategory && matchesSearch;
-    });
-
-    filteredPrompts.forEach(prompt => {
-        const promptElement = createPromptElement(prompt);
-        promptList.appendChild(promptElement);
-    });
-
-    console.log(`📄 ${filteredPrompts.length} Prompts geladen`);
-}
-
-function createPromptElement(prompt) {
-    const div = document.createElement('div');
-    div.className = 'prompt-item';
-    div.innerHTML = `
-        <div class="prompt-shortcut">${prompt.shortcut}</div>
-        <div class="prompt-title">${prompt.title}</div>
-        <div class="prompt-preview">${prompt.content.substring(0, 60)}...</div>
-        <div class="prompt-actions">
-            <button class="prompt-btn btn-copy" onclick="copyPrompt('${prompt.shortcut}')">📋</button>
-            <button class="prompt-btn btn-send" onclick="sendToCollaboration('${prompt.shortcut}')">📤</button>
-        </div>
-    `;
-    return div;
-}
-
-function copyPrompt(shortcut) {
-    const prompt = prompts[shortcut];
-    if (prompt) {
-        navigator.clipboard.writeText(prompt.content).then(() => {
-            showNotification(`${shortcut} kopiert!`, 'success');
-        }).catch(() => {
-            showNotification(`Fehler beim Kopieren von ${shortcut}`, 'error');
-        });
-    }
-}
-
-function sendToCollaboration(shortcut) {
-    const prompt = prompts[shortcut];
-    if (prompt) {
-        console.log(`📤 Sende Prompt ${shortcut} an Kollaboration`);
-        
-        const collaborationData = {
-            type: 'collaboration',
-            prompt: prompt.content,
-            promptShortcut: shortcut,
-            promptTitle: prompt.title,
-            timestamp: new Date().toISOString(),
-            client: currentState.selectedClient,
-            phase: currentState.currentPhase
-        };
-        
-        showNotification(`${shortcut} wird an Kollaboration gesendet...`, 'info');
-        generateAIResponse(collaborationData);
-    }
-}
-
-// === COLLABORATION SYSTEM ===
-function startCollaborationMonitoring() {
-    console.log('🔍 Kollaborations-Monitoring gestartet');
-    
-    // Simplified monitoring
-    setInterval(() => {
-        try {
-            const stored = localStorage.getItem('collaborationData');
-            if (stored) {
-                const data = JSON.parse(stored);
-                updateCollaborationDisplay(data);
-            }
-        } catch (error) {
-            console.error('Collaboration monitoring error:', error);
-        }
-    }, 1000);
-}
-
-function generateAIResponse(collaborationData) {
-    console.log('🤖 Generiere KI-Antwort...');
-    
-    try {
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
-    } catch (error) {
-        console.error('Storage error:', error);
-    }
-    
-    setTimeout(() => {
-        const aiResponse = generateSimulatedResponse(collaborationData.prompt, collaborationData.promptShortcut);
-        
-        const fullData = {
-            ...collaborationData,
-            aiResponse: aiResponse,
-            aiGeneratedAt: new Date().toISOString()
-        };
-        
-        try {
-            localStorage.setItem('collaborationData', JSON.stringify(fullData));
-        } catch (error) {
-            console.error('Storage error:', error);
-        }
-        
-        updateCollaborationDisplay(fullData);
-        showNotification('KI-Antwort wurde generiert.', 'success');
-    }, 2000);
-}
-
-function generateSimulatedResponse(prompt, promptShortcut) {
-    if (promptShortcut) {
-        const promptData = prompts[promptShortcut];
-        if (promptData) {
-            let response = `<strong>Analyse (${promptShortcut}):</strong> ${promptData.description}. `;
-            
-            switch(promptData.category) {
-                case 'GT':
-                    response += `Geißler-Triadik Phase ${promptData.phase} erfolgreich eingeleitet.`;
-                    break;
-                case 'SF':
-                    response += `Lösungsfokussierte Intervention aktiviert.`;
-                    break;
-                case 'DIAG':
-                    response += `Diagnostische Exploration gestartet.`;
-                    break;
-                case 'LÖS':
-                    response += `Lösungsentwicklung eingeleitet.`;
-                    break;
-                case 'META':
-                    response += `Prozessreflexion aktiviert.`;
-                    break;
-            }
-            
-            if (promptShortcut === 'GT4') {
-                response += `<br><br><strong>💡 Spannungsfeld erkannt:</strong> Avatar-Aufstellung über DelightEx empfohlen.`;
-            }
-            
-            return response;
-        }
-    }
-    
-    return 'Basierend auf Ihrem Prompt empfehle ich einen strukturierten Ansatz. Beginnen Sie mit offenen Fragen für tiefere Einsichten.';
-}
-
-function updateCollaborationDisplay(data) {
-    const display = document.getElementById('collaborationDisplay');
-    if (!display || !data) return;
-    
-    console.log('🖥️ Kollaborations-Display wird aktualisiert');
-    
-    display.innerHTML = `
-        <div class="collaboration-content">
-            <div class="prompt-section">
-                <h3>Coaching-Prompt ${data.promptShortcut ? `(${data.promptShortcut})` : ''}</h3>
-                <div class="prompt-display">${escapeHtml(data.prompt)}</div>
-            </div>
-            
-            ${data.aiResponse ? `
-                <div class="ai-response-section">
-                    <h3>KI-Antwort</h3>
-                    <div class="ai-response-display">${data.aiResponse}</div>
-                </div>
-            ` : `
-                <div class="ai-response-section">
-                    <h3>KI-Antwort</h3>
-                    <div class="ai-loading">
-                        <p>🤖 KI generiert Antwort...</p>
-                    </div>
-                </div>
-            `}
-            
-            <div class="collaboration-actions">
-                <button class="btn-primary" onclick="approvePrompt()">✅ Genehmigen</button>
-                <button class="btn-primary" onclick="rejectPrompt()">❌ Ablehnen</button>
-            </div>
-        </div>
-    `;
-}
-
-function approvePrompt() {
-    showNotification('Prompt wurde genehmigt!', 'success');
-}
-
-function rejectPrompt() {
-    showNotification('Prompt wurde abgelehnt.', 'warning');
-}
-
-// === TEMPLATE MANAGEMENT ===
-function loadTemplates() {
-    const container = document.getElementById('templateContainer');
-    if (!container) return;
-    
-    const templates = window.coachingTemplates || [];
-    console.log('📚 Lade', templates.length, 'Templates...');
-    
-    container.innerHTML = '';
-    
-    if (templates.length === 0) {
-        container.innerHTML = '<p>Keine Templates verfügbar.</p>';
-        return;
-    }
-    
-    templates.forEach(template => {
-        const card = createTemplateCard(template);
-        container.appendChild(card);
-    });
-}
-
-function createTemplateCard(template) {
-    const card = document.createElement('div');
-    card.className = 'template-card';
-    card.innerHTML = `
-        <h3>${template.title}</h3>
-        <div class="template-category">${template.category}</div>
-        <p class="template-description">${template.description}</p>
-        <div class="template-actions">
-            <button class="btn-primary" onclick="useTemplate('${template.id}')">Verwenden</button>
-        </div>
-    `;
-    return card;
-}
-
-function useTemplate(templateId) {
-    const templates = window.coachingTemplates || [];
-    const template = templates.find(t => t.id === templateId);
-    
-    if (!template) {
-        showNotification('Template nicht gefunden', 'error');
-        return;
-    }
-    
-    const editor = document.getElementById('promptEditor');
-    if (editor) {
-        editor.value = template.prompt;
-    }
-    
-    showNotification(`Template "${template.title}" geladen`, 'success');
-}
-
-// === UTILITY FUNCTIONS ===
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function showNotification(message, type = 'info') {
-    console.log(`📢 ${type}: ${message}`);
-    
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        color: white;
-        font-weight: bold;
-        z-index: 10000;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        transition: all 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-
-function restoreSessionState() {
-    // Simplified state restoration
-    console.log('🔄 Session-State Wiederherstellung...');
-}
-
-// === EVENT LISTENERS ===
 function setupEventListeners() {
-    console.log('🎧 Event Listeners werden eingerichtet');
+    console.log('🎧 Event Listeners werden eingerichtet...');
     
-    // Session-Buttons
-    const startBtn = document.getElementById('startSessionBtn');
-    const stopBtn = document.getElementById('stopSessionBtn');
-    
-    if (startBtn) {
-        startBtn.addEventListener('click', startSession);
-    }
-    
-    if (stopBtn) {
-        stopBtn.addEventListener('click', stopSession);
-    }
-    
-    // Navigation
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = link.getAttribute('href').substring(1);
-            showSection(target);
+    // Tab-Navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
         });
     });
     
-    // Category Buttons
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeCategory = btn.dataset.category;
-            loadPrompts(activeCategory, document.getElementById('promptSearch')?.value || '');
-        });
-    });
-    
-    // Search
-    const promptSearch = document.getElementById('promptSearch');
-    if (promptSearch) {
-        promptSearch.addEventListener('input', (e) => {
-            loadPrompts(activeCategory, e.target.value);
-        });
-    }
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            const shortcuts = {
-                '1': 'GT1', '2': 'GT2', '3': 'GT3', '4': 'GT4'
-            };
-            
-            if (shortcuts[e.key]) {
+    // Keyboard Shortcuts für GT1-GT12
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+            const num = parseInt(e.key);
+            if (num >= 1 && num <= 9) {
                 e.preventDefault();
-                sendToCollaboration(shortcuts[e.key]);
+                const promptKey = `GT${num}`;
+                if (window.prompts && window.prompts[promptKey]) {
+                    sendToCollaboration(promptKey);
+                }
             }
         }
+        
+        // Alt+S für Suche
+        if (e.altKey && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('promptSearch')?.focus();
+        }
+    });
+    
+    // Prompt-Suche
+    const searchInput = document.getElementById('promptSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterPrompts);
+    }
+    
+    // Kategorie-Filter
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterByCategory(this.dataset.category);
+        });
+    });
+    
+    // Coach-KI Assistant
+    const coachInput = document.getElementById('coachInput');
+    if (coachInput) {
+        coachInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleCoachQuery();
+            }
+        });
+    }
+    
+    // Quick Actions
+    document.querySelectorAll('.quick-action').forEach(btn => {
+        btn.addEventListener('click', function() {
+            sendCoachQuery(this.dataset.query);
+        });
     });
     
     console.log('✅ Event Listeners bereit');
 }
 
-function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
+function renderClientsOverview() {
+    const container = document.getElementById('clientsContainer');
+    if (!container || !window.clients) return;
     
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.style.display = 'block';
-    }
+    const clientsArray = window.clients || fallbackClients;
+    console.log(`📋 Verfügbare Klienten: ${JSON.stringify(clientsArray.map(c => c.name))}`);
     
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
+    container.innerHTML = clientsArray.map(client => `
+        <div class="client-card" onclick="selectClient('${client.id}')">
+            <div class="client-avatar">${client.avatar}</div>
+            <div class="client-info">
+                <h3>${client.name}</h3>
+                <p class="client-role">${client.role}</p>
+                <p class="client-goal">${client.currentGoal}</p>
+                <div class="client-stats">
+                    <span>📅 ${client.lastSession}</span>
+                    <span>📊 ${client.totalSessions} Sessions</span>
+                </div>
+            </div>
+            <div class="client-status ${client.status}">${client.status}</div>
+        </div>
+    `).join('');
+}
+
+function selectClient(clientId) {
+    const clientsArray = window.clients || fallbackClients;
+    currentClient = clientsArray.find(c => c.id === clientId);
     
-    const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-    if (activeLink) {
-        activeLink.classList.add('active');
+    if (currentClient) {
+        document.querySelectorAll('.client-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        event.target.closest('.client-card').classList.add('selected');
+        
+        document.getElementById('startSessionBtn').style.display = 'block';
+        updateClientInfo();
     }
 }
 
-// === GLOBAL FUNCTIONS ===
-window.copyPrompt = copyPrompt;
-window.sendToCollaboration = sendToCollaboration;
-window.useTemplate = useTemplate;
-window.approvePrompt = approvePrompt;
-window.rejectPrompt = rejectPrompt;
-window.selectClient = selectClient;
-window.startSession = startSession;
-window.stopSession = stopSession;
+function startSession() {
+    if (!currentClient) return;
+    
+    sessionActive = true;
+    sessionDuration = 0;
+    
+    // Timer starten
+    sessionTimer = setInterval(() => {
+        sessionDuration++;
+        updateSessionTimer();
+    }, 1000);
+    
+    // UI Updates
+    document.getElementById('sessionStatus').textContent = 'Session aktiv';
+    document.getElementById('sessionStatus').className = 'status active';
+    
+    switchTab('coaching');
+    updateClientInfo();
+}
 
-console.log('✅ Triadisches KI-Coaching App vollständig geladen - SYNTAX-FEHLER BEHOBEN');
+function stopSession() {
+    sessionActive = false;
+    if (sessionTimer) {
+        clearInterval(sessionTimer);
+        sessionTimer = null;
+    }
+    
+    document.getElementById('sessionStatus').textContent = 'Session beendet';
+    document.getElementById('sessionStatus').className = 'status';
+}
+
+function updateSessionTimer() {
+    const hours = Math.floor(sessionDuration / 3600);
+    const minutes = Math.floor((sessionDuration % 3600) / 60);
+    const seconds = sessionDuration % 60;
+    
+    const timerElement = document.getElementById('sessionTimer');
+    if (timerElement) {
+        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function switchTab(tabName) {
+    // Tab-Buttons aktualisieren
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    
+    // Content anzeigen
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}Tab`)?.classList.add('active');
+}
+
+function renderPhases() {
+    const container = document.getElementById('phasesContainer');
+    if (!container) return;
+    
+    const phases = [
+        { id: 1, name: 'Erstanliegen', description: 'GT1-GT3: Anliegen erfassen', prompts: ['GT1', 'GT2', 'GT3'] },
+        { id: 2, name: 'Problemanalyse', description: 'GT4-GT6: Spannungsfeld verstehen', prompts: ['GT4', 'GT5', 'GT6'] },
+        { id: 3, name: 'Lösungsstrategie', description: 'GT7-GT10: Ziel und Ressourcen', prompts: ['GT7', 'GT8', 'GT9', 'GT10'] },
+        { id: 4, name: 'Umsetzung', description: 'GT11-GT12: Handlungsplanung', prompts: ['GT11', 'GT12'] }
+    ];
+    
+    container.innerHTML = phases.map(phase => `
+        <div class="phase-card ${phase.id === currentPhase ? 'active' : ''}" onclick="setPhase(${phase.id})">
+            <div class="phase-number">${phase.id}</div>
+            <h3>${phase.name}</h3>
+            <p>${phase.description}</p>
+            <div class="phase-prompts">
+                ${phase.prompts.map(p => `<span class="prompt-tag">${p}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function setPhase(phaseId) {
+    currentPhase = phaseId;
+    renderPhases();
+    filterPromptsByPhase(phaseId);
+}
+
+function renderPrompts() {
+    const container = document.getElementById('promptsContainer');
+    if (!container) return;
+    
+    const promptsObj = window.prompts || {};
+    const promptsList = Object.entries(promptsObj);
+    
+    if (promptsList.length === 0) {
+        container.innerHTML = '<p>⚠️ Prompts werden geladen...</p>';
+        return;
+    }
+    
+    container.innerHTML = promptsList.map(([key, prompt]) => `
+        <div class="prompt-card" data-category="${prompt.category}" data-phase="${prompt.phase}">
+            <div class="prompt-header">
+                <span class="prompt-id">${key}</span>
+                <span class="prompt-category ${prompt.category.toLowerCase()}">${prompt.category}</span>
+            </div>
+            <div class="prompt-text">${prompt.text}</div>
+            <div class="prompt-description">${prompt.description}</div>
+            <div class="prompt-actions">
+                <button onclick="copyPrompt('${key}')" title="Kopieren">📋</button>
+                <button onclick="editPrompt('${key}')" title="Bearbeiten">📝</button>
+                <button onclick="sendToCollaboration('${key}')" title="An Kollaboration senden">📤</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterPrompts() {
+    const searchTerm = document.getElementById('promptSearch')?.value.toLowerCase() || '';
+    const cards = document.querySelectorAll('.prompt-card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+function filterByCategory(category) {
+    const cards = document.querySelectorAll('.prompt-card');
+    
+    // Kategorie-Buttons aktualisieren
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-category="${category}"]`)?.classList.add('active');
+    
+    cards.forEach(card => {
+        if (category === 'all') {
+            card.style.display = 'block';
+        } else {
+            card.style.display = card.dataset.category === category ? 'block' : 'none';
+        }
+    });
+}
+
+function filterPromptsByPhase(phaseId) {
+    const cards = document.querySelectorAll('.prompt-card');
+    
+    cards.forEach(card => {
+        card.style.display = card.dataset.phase == phaseId ? 'block' : 'none';
+    });
+}
+
+function copyPrompt(promptKey) {
+    const prompt = window.prompts?.[promptKey];
+    if (prompt) {
+        navigator.clipboard.writeText(prompt.text).then(() => {
+            showNotification(`📋 ${promptKey} kopiert`);
+        });
+    }
+}
+
+function editPrompt(promptKey) {
+    const prompt = window.prompts?.[promptKey];
+    if (prompt) {
+        const newText = prompt(prompt.text);
+        if (newText && newText !== prompt.text) {
+            window.prompts[promptKey].text = newText;
+            renderPrompts();
+            showNotification(`📝 ${promptKey} bearbeitet`);
+        }
+    }
+}
+
+function sendToCollaboration(promptKey) {
+    const prompt = window.prompts?.[promptKey];
+    if (!prompt) return;
+    
+    // Daten für Kollaboration vorbereiten
+    const collaborationItem = {
+        id: Date.now(),
+        type: 'prompt',
+        promptKey: promptKey,
+        text: prompt.text,
+        category: prompt.category,
+        timestamp: new Date().toLocaleTimeString(),
+        sender: 'Coach',
+        status: 'sent'
+    };
+    
+    // Zu Kollaboration hinzufügen
+    collaborationData.push(collaborationItem);
+    
+    // In localStorage speichern für Echtzeit-Sync
+    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    
+    // KI-Antwort generieren
+    setTimeout(() => {
+        generateAIResponse(collaborationItem);
+    }, 2000);
+    
+    // Zur Kollaboration wechseln
+    switchTab('collaboration');
+    updateCollaborationView();
+    
+    showNotification(`📤 ${promptKey} an Kollaboration gesendet`);
+}
+
+function generateAIResponse(promptItem) {
+    let aiResponse = '';
+    
+    // Intelligente Antworten basierend auf Prompt-Kategorie
+    switch (promptItem.category) {
+        case 'GT':
+            if (promptItem.promptKey === 'GT4') {
+                aiResponse = `Ich spüre ein Spannungsfeld zwischen **Kontrolle und Loslassen**. Einerseits möchte ich alles unter Kontrolle haben und nichts dem Zufall überlassen. Andererseits merke ich, dass dieses ständige Kontrollbedürfnis mich erschöpft und mir die Spontaneität nimmt.
+                
+**Empfehlung:** Dieses Spannungsfeld eignet sich perfekt für eine Avatar-Aufstellung. Möchten Sie das DelightEx Avatar-Tool nutzen?`;
+            } else {
+                aiResponse = `Das ist eine wichtige Frage. Lassen Sie mich kurz überlegen... [Coachee denkt nach]
+                
+Bei dieser Frage von ${promptItem.promptKey} spüre ich, dass es um **${getTopicByPrompt(promptItem.promptKey)}** geht.`;
+            }
+            break;
+            
+        case 'SF':
+            aiResponse = `Wenn ich mir diese Lösung vorstelle... Das wäre wirklich transformativ. Ich kann förmlich spüren, wie sich alles leichter anfühlen würde.
+            
+**Konkrete Veränderungen:** [Coachee beschreibt detailliert die gewünschte Zukunft]`;
+            break;
+            
+        case 'DIAG':
+            aiResponse = `Emotional bin ich **gemischt** - einerseits hoffnungsvoll, andererseits auch unsicher. Auf einer Skala von 1-10 würde ich sagen, ich stehe bei einer **6**.
+            
+**Körperlich** spüre ich: [Coachee beschreibt Körperwahrnehmungen]`;
+            break;
+            
+        case 'LÖS':
+            aiResponse = `Das ist ein sehr hilfreicher Ansatz! Wenn ich an meine **Stärken** denke, dann sind das definitiv: [Coachee zählt Ressourcen auf]
+            
+**Nächste Schritte:** Das könnte ich konkret angehen...`;
+            break;
+            
+        case 'META':
+            aiResponse = `Unser Gespräch erlebe ich als sehr **erhellend**. Besonders hilfreich war die Arbeit mit den Spannungsfeldern - das hat mir eine neue Perspektive eröffnet.
+            
+**Mitnehmen werde ich:** Die Erkenntnis über meine beiden Pole und die ersten Schritte zur Integration.`;
+            break;
+            
+        default:
+            aiResponse = `Das ist eine interessante Frage. Lassen Sie mich darüber nachdenken... [Durchdachte Antwort des Coachees basierend auf der Fragestellung]`;
+    }
+    
+    // KI-Antwort zur Kollaboration hinzufügen
+    const aiItem = {
+        id: Date.now() + 1,
+        type: 'ai_response',
+        text: aiResponse,
+        timestamp: new Date().toLocaleTimeString(),
+        sender: 'KI-Coachee',
+        status: 'generated',
+        relatedPrompt: promptItem.promptKey
+    };
+    
+    collaborationData.push(aiItem);
+    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    updateCollaborationView();
+}
+
+function getTopicByPrompt(promptKey) {
+    const topics = {
+        'GT1': 'Anliegen und Bedürfnisse',
+        'GT2': 'Zeitrahmen und Entwicklung', 
+        'GT3': 'Veränderungsmotivation',
+        'GT4': 'Spannungsfelder und Polaritäten',
+        'GT5': 'Emotionale Auswirkungen',
+        'GT6': 'Persönliche Bedeutung',
+        'GT7': 'Zielvorstellungen',
+        'GT8': 'Benötigte Ressourcen',
+        'GT9': 'Loslassen-Prozesse',
+        'GT10': 'Bewahren und Stärken',
+        'GT11': 'Erste Schritte',
+        'GT12': 'Unterstützungsbedarf'
+    };
+    return topics[promptKey] || 'persönliche Entwicklung';
+}
+
+function initializeCollaboration() {
+    // Bestehende Kollaborations-Daten laden
+    const saved = localStorage.getItem('collaborationData');
+    if (saved) {
+        try {
+            collaborationData = JSON.parse(saved);
+        } catch (e) {
+            collaborationData = [];
+        }
+    }
+    
+    updateCollaborationView();
+    
+    // Echtzeit-Monitoring
+    setInterval(() => {
+        const current = localStorage.getItem('collaborationData');
+        if (current && current !== JSON.stringify(collaborationData)) {
+            try {
+                collaborationData = JSON.parse(current);
+                updateCollaborationView();
+            } catch (e) {
+                console.log('Kollaboration sync error:', e);
+            }
+        }
+    }, 500);
+}
+
+function updateCollaborationView() {
+    const container = document.getElementById('collaborationMessages');
+    if (!container) return;
+    
+    if (collaborationData.length === 0) {
+        container.innerHTML = `
+            <div class="collaboration-empty">
+                <h3>⏳ Warten auf Coaching-Prompt...</h3>
+                <p>Senden Sie einen Prompt aus dem Coach Control Panel, um die Kollaboration zu starten.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = collaborationData.map(item => `
+        <div class="collaboration-message ${item.sender.toLowerCase().replace(' ', '-').replace('-', '_')}">
+            <div class="message-header">
+                <span class="sender">${item.sender}</span>
+                <span class="timestamp">${item.timestamp}</span>
+                ${item.promptKey ? `<span class="prompt-ref">${item.promptKey}</span>` : ''}
+            </div>
+            <div class="message-content">${item.text}</div>
+            ${item.type === 'ai_response' ? `
+                <div class="message-actions">
+                    <button onclick="approveResponse(${item.id})" class="approve-btn">✅ Genehmigen</button>
+                    <button onclick="rejectResponse(${item.id})" class="reject-btn">❌ Ablehnen</button>
+                    <button onclick="editResponse(${item.id})" class="edit-btn">🔄 Änderungen</button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+    
+    // Auto-scroll
+    container.scrollTop = container.scrollHeight;
+}
+
+function approveResponse(responseId) {
+    const item = collaborationData.find(i => i.id === responseId);
+    if (item) {
+        item.status = 'approved';
+        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+        updateCollaborationView();
+        showNotification('✅ Antwort genehmigt');
+    }
+}
+
+function rejectResponse(responseId) {
+    collaborationData = collaborationData.filter(i => i.id !== responseId);
+    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    updateCollaborationView();
+    showNotification('❌ Antwort abgelehnt');
+}
+
+function editResponse(responseId) {
+    const item = collaborationData.find(i => i.id === responseId);
+    if (item) {
+        const newText = prompt('Antwort bearbeiten:', item.text);
+        if (newText && newText !== item.text) {
+            item.text = newText;
+            item.status = 'edited';
+            localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+            updateCollaborationView();
+            showNotification('🔄 Antwort bearbeitet');
+        }
+    }
+}
+
+function handleCoachQuery() {
+    const input = document.getElementById('coachInput');
+    if (!input || !input.value.trim()) return;
+    
+    const query = input.value.trim();
+    input.value = '';
+    
+    sendCoachQuery(query);
+}
+
+function sendCoachQuery(query) {
+    // Query zur Coach-KI Historie hinzufügen
+    addCoachMessage('Coach', query);
+    
+    // KI-Antwort generieren
+    setTimeout(() => {
+        const response = generateCoachAIResponse(query);
+        addCoachMessage('Coach-KI', response);
+    }, 1000);
+}
+
+function generateCoachAIResponse(query) {
+    const lowerQuery = query.toLowerCase();
+    
+    // Intelligente Antworten basierend auf Query
+    if (lowerQuery.includes('gt4') || lowerQuery.includes('spannungsfeld')) {
+        return `**GT4-Einsatz - Spannungsfeld-Identifikation:**
+
+🎯 GT4 "Was ist einerseits, was ist andererseits?" ist perfekt um Polaritäten zu erfassen.
+
+**Vorgehensweise:**
+• Nach beiden Polen fragen
+• Spannungsfeld benennen lassen
+• DelightEx Avatar-Aufstellung empfehlen
+• Integration in GT7-GT10 vorbereiten
+
+**Next Steps:** GT5 (emotionale Auswirkung) → GT6 (Bedeutung)`;
+    }
+    
+    if (lowerQuery.includes('phase')) {
+        return `**Aktueller Prozess-Status:**
+
+📍 **Phase ${currentPhase}/4** - ${getPhaseName(currentPhase)}
+👤 **Client:** ${currentClient?.name || 'Kein Client ausgewählt'}
+⏱️ **Session:** ${sessionActive ? 'Aktiv' : 'Nicht gestartet'}
+
+**Empfehlung:** ${getPhaseRecommendation(currentPhase)}`;
+    }
+    
+    if (lowerQuery.includes('prozess')) {
+        return `**Prozess-Beratung:**
+
+🔄 **12-Phasen-Ablauf** (Geißler Triadisch):
+• **Phase 1-3:** Anliegen erfassen (GT1-GT3)
+• **Phase 4-6:** Spannungsfeld verstehen (GT4-GT6)  
+• **Phase 7-10:** Lösungsraum öffnen (GT7-GT10)
+• **Phase 11-12:** Handlung planen (GT11-GT12)
+
+**Aktuelle Empfehlung:** ${getProcessAdvice()}`;
+    }
+    
+    if (lowerQuery.includes('methoden')) {
+        const methods = [
+            '🎭 **Avatar-Aufstellung** (DelightEx) - für Spannungsfelder',
+            '🔍 **Lösungsfokus** (SF1-SF5) - für Ressourcen-Aktivierung', 
+            '📊 **Skalierung** (SF2) - für Fortschritts-Messung',
+            '🎯 **Wunderfrage** (SF1) - für Ziel-Klarheit',
+            '🧠 **Meta-Reflexion** (META1-META5) - für Prozess-Bewertung'
+        ];
+        return `**Methoden-Empfehlung:**\n\n${methods[Math.floor(Math.random() * methods.length)]}\n\n**Integration:** Diese Methode passt optimal zu Phase ${currentPhase} und kann mit den GT-Prompts kombiniert werden.`;
+    }
+    
+    return `**Coach-KI Antwort:**
+
+Ihre Anfrage "${query}" wurde verarbeitet. 
+
+**Kontext:** 
+• Client: ${currentClient?.name || 'Nicht ausgewählt'}
+• Phase: ${currentPhase}/4
+• Session: ${sessionActive ? 'Aktiv' : 'Bereit'}
+
+**Empfehlung:** Nutzen Sie die GT-Prompts systematisch und beobachten Sie die Spannungsfeld-Dynamik beim Coachee.`;
+}
+
+function addCoachMessage(sender, message) {
+    const container = document.getElementById('coachMessages');
+    if (!container) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `coach-message ${sender.toLowerCase().replace('-', '_')}`;
+    messageDiv.innerHTML = `
+        <div class="message-header">
+            <strong>${sender}</strong>
+            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+        </div>
+        <div class="message-content">${message}</div>
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function getPhaseName(phase) {
+    const names = {
+        1: 'Erstanliegen',
+        2: 'Problemanalyse', 
+        3: 'Lösungsstrategie',
+        4: 'Umsetzung'
+    };
+    return names[phase] || 'Unbekannt';
+}
+
+function getPhaseRecommendation(phase) {
+    const recommendations = {
+        1: 'Beginnen Sie mit GT1 für offenes Anliegen, dann GT2 für Zeitrahmen',
+        2: 'GT4 für Spannungsfeld-Identifikation ist zentral - bereiten Sie Avatar-Aufstellung vor',
+        3: 'GT7-GT8 für Ziel und Ressourcen, GT9-GT10 für Bewahren/Loslassen-Balance',
+        4: 'GT11 für konkrete Schritte, GT12 für Unterstützungs-Angebot'
+    };
+    return recommendations[phase] || 'Flexibel auf den Coachee eingehen';
+}
+
+function getProcessAdvice() {
+    if (!currentClient) return 'Wählen Sie zuerst einen Klienten aus';
+    if (!sessionActive) return 'Starten Sie die Session für gezielten Prozess-Support';
+    return `Bei ${currentClient.name} empfiehlt sich systematisches Vorgehen mit GT-Prompts`;
+}
+
+function updateClientInfo() {
+    const elements = document.querySelectorAll('.current-client-name');
+    elements.forEach(el => {
+        el.textContent = currentClient?.name || 'Kein Client ausgewählt';
+    });
+    
+    const avatarElements = document.querySelectorAll('.current-client-avatar');
+    avatarElements.forEach(el => {
+        el.textContent = currentClient?.avatar || '👤';
+    });
+}
+
+function showNotification(message) {
+    // Einfache Benachrichtigung
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.opacity = '1', 100);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Debug-Funktionen
+function debugCollaborationSync() {
+    console.log('🔍 Kollaboration Debug:');
+    console.log('- Daten im Speicher:', collaborationData.length);
+    console.log('- LocalStorage:', localStorage.getItem('collaborationData')?.length || 0);
+    console.log('- Letzte Aktivität:', collaborationData[collaborationData.length - 1]?.timestamp);
+}
+
+// Avatar Tool Integration
+function openAvatarTool() {
+    window.open('https://www.delightex.com', '_blank');
+    showNotification('🎭 DelightEx Avatar-Tool geöffnet');
+}
