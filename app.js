@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event Listeners einrichten
     setupEventListeners();
     
+    // Debug-Info aktualisieren
+    updateDebugInfo('App erfolgreich geladen');
+    
     console.log('✅ Triadisches KI-Coaching App vollständig geladen - ECHTE GT1-GT12 PROMPTS');
 });
 
@@ -93,6 +96,8 @@ function validateData() {
         console.log(`✅ Clients Array verfügbar: ${window.clients?.length || 0} Klienten`);
         console.log(`🔍 Prompts verfügbar: ${Object.keys(window.prompts || {}).length}`);
         console.log(`✅ ${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts geladen`);
+        
+        updateDebugInfo(`${window.clients?.length || 0} Klienten + ${Object.keys(window.prompts || {}).length} Prompts geladen`);
     }
     
     checkData();
@@ -114,6 +119,12 @@ function setupEventListeners() {
             switchTab(this.dataset.tab);
         });
     });
+    
+    // Session Controls
+    const startBtn = document.getElementById('startSessionBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', startSession);
+    }
     
     // Keyboard Shortcuts für GT1-GT12
     document.addEventListener('keydown', function(e) {
@@ -171,26 +182,38 @@ function setupEventListeners() {
 
 function renderClientsOverview() {
     const container = document.getElementById('clientsContainer');
-    if (!container || !window.clients) return;
+    if (!container) {
+        console.error('❌ clientsContainer nicht gefunden!');
+        updateDebugInfo('ERROR: clientsContainer fehlt');
+        return;
+    }
     
     const clientsArray = window.clients || fallbackClients;
-    console.log(`📋 Verfügbare Klienten: ${JSON.stringify(clientsArray.map(c => c.name))}`);
+    console.log(`📋 Rendere ${clientsArray.length} Klienten`);
+    
+    if (clientsArray.length === 0) {
+        container.innerHTML = '<p>Keine Klienten verfügbar</p>';
+        return;
+    }
     
     container.innerHTML = clientsArray.map(client => `
         <div class="client-card" onclick="selectClient('${client.id}')">
+            <div class="client-status ${client.status}">${client.status}</div>
             <div class="client-avatar">${client.avatar}</div>
             <div class="client-info">
                 <h3>${client.name}</h3>
-                <p class="client-role">${client.role}</p>
-                <p class="client-goal">${client.currentGoal}</p>
+                <div class="client-role">${client.role}</div>
+                <div class="client-goal">${client.currentGoal}</div>
                 <div class="client-stats">
                     <span>📅 ${client.lastSession}</span>
                     <span>📊 ${client.totalSessions} Sessions</span>
                 </div>
             </div>
-            <div class="client-status ${client.status}">${client.status}</div>
         </div>
     `).join('');
+    
+    console.log('✅ Klienten gerendert');
+    updateDebugInfo(`${clientsArray.length} Klienten angezeigt`);
 }
 
 function selectClient(clientId) {
@@ -198,18 +221,32 @@ function selectClient(clientId) {
     currentClient = clientsArray.find(c => c.id === clientId);
     
     if (currentClient) {
+        // Alle Karten-Selektionen entfernen
         document.querySelectorAll('.client-card').forEach(card => {
             card.classList.remove('selected');
         });
+        
+        // Aktuelle Karte markieren
         event.target.closest('.client-card').classList.add('selected');
         
-        document.getElementById('startSessionBtn').style.display = 'block';
+        // Start-Button anzeigen
+        const startBtn = document.getElementById('startSessionBtn');
+        if (startBtn) {
+            startBtn.style.display = 'block';
+            startBtn.textContent = `🎯 Session mit ${currentClient.name} starten`;
+        }
+        
+        console.log(`✅ Klient ausgewählt: ${currentClient.name}`);
+        updateDebugInfo(`Klient: ${currentClient.name}`);
         updateClientInfo();
     }
 }
 
 function startSession() {
-    if (!currentClient) return;
+    if (!currentClient) {
+        alert('Bitte wählen Sie zuerst einen Klienten aus.');
+        return;
+    }
     
     sessionActive = true;
     sessionDuration = 0;
@@ -221,10 +258,17 @@ function startSession() {
     }, 1000);
     
     // UI Updates
-    document.getElementById('sessionStatus').textContent = 'Session aktiv';
-    document.getElementById('sessionStatus').className = 'status active';
+    const statusElement = document.getElementById('sessionStatus');
+    if (statusElement) {
+        statusElement.textContent = `Session mit ${currentClient.name}`;
+        statusElement.className = 'status active';
+    }
     
+    // Zum Coaching-Tab wechseln
     switchTab('coaching');
+    
+    console.log(`🚀 Session gestartet mit ${currentClient.name}`);
+    updateDebugInfo(`Session aktiv: ${currentClient.name}`);
     updateClientInfo();
 }
 
@@ -235,8 +279,14 @@ function stopSession() {
         sessionTimer = null;
     }
     
-    document.getElementById('sessionStatus').textContent = 'Session beendet';
-    document.getElementById('sessionStatus').className = 'status';
+    const statusElement = document.getElementById('sessionStatus');
+    if (statusElement) {
+        statusElement.textContent = 'Session beendet';
+        statusElement.className = 'status';
+    }
+    
+    console.log('⏹️ Session beendet');
+    updateDebugInfo('Session beendet');
 }
 
 function updateSessionTimer() {
@@ -251,6 +301,8 @@ function updateSessionTimer() {
 }
 
 function switchTab(tabName) {
+    console.log(`📑 Wechsel zu Tab: ${tabName}`);
+    
     // Tab-Buttons aktualisieren
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -261,7 +313,14 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById(`${tabName}Tab`)?.classList.add('active');
+    const targetTab = document.getElementById(`${tabName}Tab`);
+    if (targetTab) {
+        targetTab.classList.add('active');
+    } else {
+        console.error(`❌ Tab ${tabName}Tab nicht gefunden`);
+    }
+    
+    updateDebugInfo(`Tab: ${tabName}`);
 }
 
 function renderPhases() {
@@ -291,6 +350,21 @@ function setPhase(phaseId) {
     currentPhase = phaseId;
     renderPhases();
     filterPromptsByPhase(phaseId);
+    
+    // Current Phase Display aktualisieren
+    const phaseDisplay = document.getElementById('currentPhaseDisplay');
+    if (phaseDisplay) {
+        const phaseNames = {
+            1: 'Erstanliegen',
+            2: 'Problemanalyse',
+            3: 'Lösungsstrategie',
+            4: 'Umsetzung'
+        };
+        phaseDisplay.textContent = `Phase ${phaseId}: ${phaseNames[phaseId]}`;
+    }
+    
+    console.log(`📊 Phase ${phaseId} aktiviert`);
+    updateDebugInfo(`Phase: ${phaseId}/4`);
 }
 
 function renderPrompts() {
@@ -320,6 +394,8 @@ function renderPrompts() {
             </div>
         </div>
     `).join('');
+    
+    console.log(`✅ ${promptsList.length} Prompts gerendert`);
 }
 
 function filterPrompts() {
@@ -370,18 +446,21 @@ function copyPrompt(promptKey) {
 function editPrompt(promptKey) {
     const prompt = window.prompts?.[promptKey];
     if (prompt) {
-        const newText = prompt(prompt.text);
-        if (newText && newText !== prompt.text) {
-            window.prompts[promptKey].text = newText;
-            renderPrompts();
-            showNotification(`📝 ${promptKey} bearbeitet`);
+        const promptEditor = document.getElementById('promptEditor');
+        if (promptEditor) {
+            promptEditor.value = prompt.text;
+            switchTab('coaching');
+            showNotification(`📝 ${promptKey} in Editor geladen`);
         }
     }
 }
 
 function sendToCollaboration(promptKey) {
     const prompt = window.prompts?.[promptKey];
-    if (!prompt) return;
+    if (!prompt) {
+        console.error('Prompt nicht gefunden:', promptKey);
+        return;
+    }
     
     // Daten für Kollaboration vorbereiten
     const collaborationItem = {
@@ -399,7 +478,11 @@ function sendToCollaboration(promptKey) {
     collaborationData.push(collaborationItem);
     
     // In localStorage speichern für Echtzeit-Sync
-    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    try {
+        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    } catch(e) {
+        console.warn('localStorage save failed:', e);
+    }
     
     // KI-Antwort generieren
     setTimeout(() => {
@@ -411,6 +494,7 @@ function sendToCollaboration(promptKey) {
     updateCollaborationView();
     
     showNotification(`📤 ${promptKey} an Kollaboration gesendet`);
+    console.log(`📤 Prompt ${promptKey} gesendet`);
 }
 
 function generateAIResponse(promptItem) {
@@ -470,7 +554,13 @@ Bei dieser Frage von ${promptItem.promptKey} spüre ich, dass es um **${getTopic
     };
     
     collaborationData.push(aiItem);
-    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    
+    try {
+        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    } catch(e) {
+        console.warn('localStorage save failed:', e);
+    }
+    
     updateCollaborationView();
 }
 
@@ -494,29 +584,17 @@ function getTopicByPrompt(promptKey) {
 
 function initializeCollaboration() {
     // Bestehende Kollaborations-Daten laden
-    const saved = localStorage.getItem('collaborationData');
-    if (saved) {
-        try {
+    try {
+        const saved = localStorage.getItem('collaborationData');
+        if (saved) {
             collaborationData = JSON.parse(saved);
-        } catch (e) {
-            collaborationData = [];
         }
+    } catch(e) {
+        console.warn('Could not load collaboration data:', e);
+        collaborationData = [];
     }
     
     updateCollaborationView();
-    
-    // Echtzeit-Monitoring
-    setInterval(() => {
-        const current = localStorage.getItem('collaborationData');
-        if (current && current !== JSON.stringify(collaborationData)) {
-            try {
-                collaborationData = JSON.parse(current);
-                updateCollaborationView();
-            } catch (e) {
-                console.log('Kollaboration sync error:', e);
-            }
-        }
-    }, 500);
 }
 
 function updateCollaborationView() {
@@ -559,7 +637,11 @@ function approveResponse(responseId) {
     const item = collaborationData.find(i => i.id === responseId);
     if (item) {
         item.status = 'approved';
-        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+        try {
+            localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+        } catch(e) {
+            console.warn('localStorage save failed:', e);
+        }
         updateCollaborationView();
         showNotification('✅ Antwort genehmigt');
     }
@@ -567,7 +649,11 @@ function approveResponse(responseId) {
 
 function rejectResponse(responseId) {
     collaborationData = collaborationData.filter(i => i.id !== responseId);
-    localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    try {
+        localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+    } catch(e) {
+        console.warn('localStorage save failed:', e);
+    }
     updateCollaborationView();
     showNotification('❌ Antwort abgelehnt');
 }
@@ -579,7 +665,11 @@ function editResponse(responseId) {
         if (newText && newText !== item.text) {
             item.text = newText;
             item.status = 'edited';
-            localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+            try {
+                localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+            } catch(e) {
+                console.warn('localStorage save failed:', e);
+            }
             updateCollaborationView();
             showNotification('🔄 Antwort bearbeitet');
         }
@@ -753,6 +843,36 @@ function showNotification(message) {
     }, 3000);
 }
 
+function updateDebugInfo(message) {
+    const debugElement = document.getElementById('debugInfo');
+    if (debugElement) {
+        const timestamp = new Date().toLocaleTimeString();
+        debugElement.innerHTML = `
+            <strong>Coach Mission Control Debug</strong><br>
+            ${timestamp}: ${message}<br>
+            Client: ${currentClient?.name || 'Kein Client'}<br>
+            Session: ${sessionActive ? 'Aktiv' : 'Bereit'}<br>
+            Phase: ${currentPhase}/4<br>
+            Prompts: ${Object.keys(window.prompts || {}).length}
+        `;
+    }
+}
+
+// Avatar Tool Integration
+function openAvatarTool() {
+    window.open('https://www.delightex.com', '_blank');
+    showNotification('🎭 DelightEx Avatar-Tool geöffnet');
+}
+
+// Template System Basis-Funktionen
+function filterTemplates() {
+    const searchTerm = document.getElementById('templateSearch')?.value.toLowerCase() || '';
+    const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+    
+    // Template-Filter-Logik hier implementieren
+    console.log('Filter templates:', searchTerm, categoryFilter);
+}
+
 // Debug-Funktionen
 function debugCollaborationSync() {
     console.log('🔍 Kollaboration Debug:');
@@ -761,8 +881,23 @@ function debugCollaborationSync() {
     console.log('- Letzte Aktivität:', collaborationData[collaborationData.length - 1]?.timestamp);
 }
 
-// Avatar Tool Integration
-function openAvatarTool() {
-    window.open('https://www.delightex.com', '_blank');
-    showNotification('🎭 DelightEx Avatar-Tool geöffnet');
-}
+// Global verfügbare Debug-Funktionen
+window.debugApp = function() {
+    console.log('=== APP DEBUG INFO ===');
+    console.log('Current Client:', currentClient);
+    console.log('Session Active:', sessionActive);
+    console.log('Current Phase:', currentPhase);
+    console.log('Collaboration Data:', collaborationData);
+    console.log('Available Prompts:', Object.keys(window.prompts || {}));
+    console.log('Available Clients:', window.clients?.length || 0);
+    console.log('=== END DEBUG INFO ===');
+    
+    updateDebugInfo('Debug info logged to console');
+};
+
+console.log('🔧 Coach Mission Control v3.2 - KLIENTEN-ANZEIGE FIXED! 🎯');
+console.log('✅ Container ID Problem behoben');
+console.log('✅ Tab-Navigation implementiert');
+console.log('✅ Vollständige GT1-GT12 Prompts integriert');
+console.log('✅ Debug-Panel für Entwicklung');
+console.log('🚀 Type debugApp() für Debug-Informationen');
